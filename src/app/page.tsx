@@ -5,15 +5,16 @@ import { useState, useRef, useEffect } from "react";
 interface Rectangle {
   // Coordinates for drawing on the screen (in pixels)
   display: { x: number; y: number; width: number; height: number };
-  // Normalized coordinates (relative values between 0 and 1) based on the document's natural dimensions
+  // Normalized coordinates (values between 0 and 1) relative to the document's natural dimensions
   normalized: { x: number; y: number; width: number; height: number };
-  // Label for the defined section
   label?: string;
 }
 
 interface Template {
   name: string;
   rectangles: Rectangle[];
+  // Normalized anchor (center of the first detected block) for the template
+  anchor?: { x: number; y: number } | null;
 }
 
 const Home: React.FC = () => {
@@ -24,17 +25,17 @@ const Home: React.FC = () => {
   const [rectangles, setRectangles] = useState<Rectangle[]>([]);
   const [currentRect, setCurrentRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [dragging, setDragging] = useState(false);
-  // Holds the OCR results for each defined section
   const [sectionData, setSectionData] = useState<Array<{ label: string; text: string }>>([]);
-  // Saved templates from localStorage
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplateName, setSelectedTemplateName] = useState<string>("");
+  const [currentTemplate, setCurrentTemplate] = useState<Template | null>(null);
+  // The template anchor is the normalized center of the first detected block.
+  const [templateAnchor, setTemplateAnchor] = useState<{ x: number; y: number } | null>(null);
 
-  // Refs for image container and image elements
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 
-  // Load templates from localStorage on mount
+  // Load templates from localStorage on mount.
   useEffect(() => {
     const saved = localStorage.getItem("documentTemplates");
     if (saved) {
@@ -53,42 +54,141 @@ const Home: React.FC = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreviewUrl(reader.result as string);
-        // Reset any previous rectangles, section data, and selected template.
+        // Reset previous state.
         setRectangles([]);
         setSectionData([]);
         setSelectedTemplateName("");
+        setCurrentTemplate(null);
+        setTemplateAnchor(null);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  // Save the current set of rectangles as a template in localStorage
-  const handleSaveTemplate = () => {
-    if (rectangles.length === 0) {
-      alert("Define at least one section before saving a template.");
+  // Auto-generate sections from detected text blocks.
+  // Also, store the normalized center of the first block as the template anchor.
+  const handleAutoGenerateSections = async () => {
+    if (!selectedFile || !imageRef.current || !imageContainerRef.current) return;
+    setLoading(true);
+    const Tesseract = await import("tesseract.js");
+    const { createWorker } = await import("tesseract.js");
+    const worker = await createWorker("eng", Tesseract.OEM.DEFAULT, {
+      logger: (m) => {
+        if (m.status === "recognizing text") {
+          setProgress(m.progress);
+        }
+      },
+    });
+    await worker.setParameters({ tessedit_pageseg_mode: Tesseract.PSM.AUTO_OSD });
+    // Run OCR with parameters to retrieve blocks.
+    const result = await worker.recognize(selectedFile, {}, { blocks: true, box: true, layoutBlocks: true });
+    await worker.terminate();
+
+    console.log("OCR Result:", result);
+
+    const blocks = result.data.blocks;
+    if (blocks && blocks.length > 0) {
+      const naturalWidth = imageRef.current.naturalWidth;
+      const naturalHeight = imageRef.current.naturalHeight;
+      const containerRect = imageContainerRef.current.getBoundingClientRect();
+
+      // Use the first block's center as the template anchor.
+      const firstBlock = blocks[0];
+      const anchorCenter = {
+        x: ((firstBlock.bbox.x0 + firstBlock.bbox.x1) / 2) / naturalWidth,
+        y: ((firstBlock.bbox.y0 + firstBlock.bbox.y1) / 2) / naturalHeight,
+      };
+      setTemplateAnchor(anchorCenter);
+
+      // Map blocks to candidate rectangles with initial labels "Section 1", "Section 2", etc.
+      const autoRects = blocks.map((block: any, index: number) => {
+        const x = block.bbox.x0 / naturalWidth;
+        const y = block.bbox.y0 / naturalHeight;
+        const width = (block.bbox.x1 - block.bbox.x0) / naturalWidth;
+        const height = (block.bbox.y1 - block.bbox.y0) / naturalHeight;
+        const displayX = (block.bbox.x0 / naturalWidth) * containerRect.width;
+        const displayY = (block.bbox.y0 / naturalHeight) * containerRect.height;
+        const displayWidth = ((block.bbox.x1 - block.bbox.x0) / naturalWidth) * containerRect.width;
+        const displayHeight = ((block.bbox.y1 - block.bbox.y0) / naturalHeight) * containerRect.height;
+        return {
+          display: { x: displayX, y: displayY, width: displayWidth, height: displayHeight },
+          normalized: { x, y, width, height },
+          label: `Section ${index + 1}`
+        };
+      });
+      setRectangles(autoRects);
+    } else {
+      alert("No text blocks detected.");
+    }
+    setLoading(false);
+  };
+
+  // Function to detect the first block (anchor) in the current document.
+  const detectFirstBlockAnchor = async (): Promise<{ x: number; y: number } | null> => {
+    if (!selectedFile || !imageRef.current) return null;
+    const Tesseract = await import("tesseract.js");
+    const { createWorker } = await import("tesseract.js");
+    const worker = await createWorker("eng", Tesseract.OEM.DEFAULT, {
+      logger: (m) => {
+        if (m.status === "recognizing text") {
+          setProgress(m.progress);
+        }
+      },
+    });
+    await worker.setParameters({ tessedit_pageseg_mode: Tesseract.PSM.AUTO_OSD });
+    const result = await worker.recognize(selectedFile, {}, { blocks: true, box: true, layoutBlocks: true });
+    await worker.terminate();
+    const blocks = result.data.blocks;
+    if (blocks && blocks.length > 0) {
+      const naturalWidth = imageRef.current.naturalWidth;
+      const naturalHeight = imageRef.current.naturalHeight;
+      const firstBlock = blocks[0];
+      const centerX = (firstBlock.bbox.x0 + firstBlock.bbox.x1) / 2;
+      const centerY = (firstBlock.bbox.y0 + firstBlock.bbox.y1) / 2;
+      return { x: centerX / naturalWidth, y: centerY / naturalHeight };
+    }
+    return null;
+  };
+
+  // Adjust the overlay rectangles on the current document by detecting the new anchor (first block)
+  // and computing the offset compared to the stored template anchor.
+  const handleAdjustOverlays = async () => {
+    if (!currentTemplate || !currentTemplate.anchor) {
+      alert("No template anchor available. Make sure to save a template with auto-detected anchor.");
       return;
     }
-    const name = window.prompt("Enter a name for this document template", "");
-    if (!name) return;
-    const newTemplate: Template = { name, rectangles };
-    const updatedTemplates = [...templates, newTemplate];
-    setTemplates(updatedTemplates);
-    localStorage.setItem("documentTemplates", JSON.stringify(updatedTemplates));
-    alert(`Template "${name}" saved.`);
-  };
-
-  // Load the selected template and update the overlays
-  const handleLoadTemplate = () => {
-    const template = templates.find((t) => t.name === selectedTemplateName);
-    if (template) {
-      setRectangles(template.rectangles);
-    } else {
-      alert("Selected template not found.");
+    const newAnchor = await detectFirstBlockAnchor();
+    if (!newAnchor) {
+      alert("Could not detect anchor in the new document.");
+      return;
     }
+    // Compute offset (normalized difference).
+    const offsetX = newAnchor.x - currentTemplate.anchor.x;
+    const offsetY = newAnchor.y - currentTemplate.anchor.y;
+
+    // Update each rectangle's normalized coordinates by adding the offset.
+    if (!imageRef.current || !imageContainerRef.current) return;
+    const containerRect = imageContainerRef.current.getBoundingClientRect();
+    const adjustedRectangles = rectangles.map((rect) => {
+      const newNormalized = {
+        x: rect.normalized.x + offsetX,
+        y: rect.normalized.y + offsetY,
+        width: rect.normalized.width,
+        height: rect.normalized.height,
+      };
+      // Update display coordinates using container dimensions.
+      const newDisplay = {
+        x: newNormalized.x * containerRect.width,
+        y: newNormalized.y * containerRect.height,
+        width: newNormalized.width * containerRect.width,
+        height: newNormalized.height * containerRect.height,
+      };
+      return { ...rect, normalized: newNormalized, display: newDisplay };
+    });
+    setRectangles(adjustedRectangles);
   };
 
-  // Process the image by iterating over all defined (normalized) rectangles.
-  // It converts each normalized rectangle back to actual coordinates based on the current image's natural dimensions.
+  // Process the document using the (possibly adjusted) normalized rectangles.
   const handleProcessDocument = async () => {
     if (!selectedFile) return;
     if (rectangles.length === 0) {
@@ -97,12 +197,10 @@ const Home: React.FC = () => {
     }
     setLoading(true);
     setProgress(0);
-    setSectionData([]); // Reset previous results
+    setSectionData([]);
 
-    // Dynamically import Tesseract.js and create a worker
     const Tesseract = await import("tesseract.js");
     const { createWorker } = await import("tesseract.js");
-
     const worker = await createWorker("eng", Tesseract.OEM.DEFAULT, {
       logger: (m) => {
         if (m.status === "recognizing text") {
@@ -110,16 +208,12 @@ const Home: React.FC = () => {
         }
       },
     });
-
-    worker.load();
-
     const imgEl = imageRef.current;
     if (!imgEl) return;
     const naturalWidth = imgEl.naturalWidth;
     const naturalHeight = imgEl.naturalHeight;
 
     const sections: Array<{ label: string; text: string }> = [];
-    // Process each rectangle sequentially by converting normalized coordinates to actual coordinates.
     for (const rect of rectangles) {
       const actualRect = {
         left: rect.normalized.x * naturalWidth,
@@ -127,9 +221,7 @@ const Home: React.FC = () => {
         width: rect.normalized.width * naturalWidth,
         height: rect.normalized.height * naturalHeight,
       };
-      const { data } = await worker.recognize(selectedFile, {
-        rectangle: actualRect,
-      });
+      const { data } = await worker.recognize(selectedFile, { rectangle: actualRect });
       sections.push({
         label: rect.label || "Unnamed Section",
         text: data.text,
@@ -140,35 +232,40 @@ const Home: React.FC = () => {
     setLoading(false);
   };
 
-  // Handler to edit a rectangle's label
-  const handleEditRectangle = (index: number) => {
-    const newLabel = window.prompt("Enter new label for this section", rectangles[index].label || "");
-    if (newLabel !== null) {
-      setRectangles((prev) => {
-        const updated = [...prev];
-        updated[index].label = newLabel || "Unnamed Section";
-        return updated;
-      });
-    }
-  };
-
-  // Handler to delete a rectangle
-  const handleDeleteRectangle = (index: number) => {
-    if (window.confirm("Delete this section?")) {
-      setRectangles((prev) => prev.filter((_, i) => i !== index));
-    }
-  };
-
-  // Handlers for drawing a rectangle on the image.
-  // Only start drawing if the click is directly on the container or image.
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (
-      e.target !== imageContainerRef.current &&
-      e.target !== imageRef.current
-    ) {
-      // Do not start drawing if clicking on an overlay.
+  // Save the current template (including the stored anchor) to localStorage.
+  const handleSaveTemplate = () => {
+    if (rectangles.length === 0) {
+      alert("Define at least one section before saving a template.");
       return;
     }
+    const name = window.prompt("Enter a name for this document template", "");
+    if (!name) return;
+    const newTemplate: Template = { name, rectangles, anchor: templateAnchor };
+    const updatedTemplates = [...templates, newTemplate];
+    setTemplates(updatedTemplates);
+    localStorage.setItem("documentTemplates", JSON.stringify(updatedTemplates));
+    alert(`Template "${name}" saved.`);
+  };
+
+  // Load a template.
+  const handleLoadTemplate = () => {
+    const template = templates.find((t) => t.name === selectedTemplateName);
+    if (template) {
+      setRectangles(template.rectangles);
+      setCurrentTemplate(template);
+      if (template.anchor) {
+        setTemplateAnchor(template.anchor);
+      } else {
+        setTemplateAnchor(null);
+      }
+    } else {
+      alert("Selected template not found.");
+    }
+  };
+
+  // Manual drawing of rectangles.
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.target !== imageContainerRef.current && e.target !== imageRef.current) return;
     if (!imageContainerRef.current) return;
     const rect = imageContainerRef.current.getBoundingClientRect();
     const startX = e.clientX - rect.left;
@@ -191,8 +288,6 @@ const Home: React.FC = () => {
     setCurrentRect(newRect);
   };
 
-  // On mouse up, compute the "actual" rectangle based on the current image dimensions,
-  // then convert those values to normalized coordinates (i.e. values between 0 and 1).
   const handleMouseUp = () => {
     if (!dragging || !currentRect || !imageRef.current || !imageContainerRef.current) return;
     setDragging(false);
@@ -200,14 +295,12 @@ const Home: React.FC = () => {
     const imgEl = imageRef.current;
     const scaleX = imgEl.naturalWidth / containerRect.width;
     const scaleY = imgEl.naturalHeight / containerRect.height;
-    // Compute the absolute (actual) coordinates in the natural resolution.
     const actualRect = {
       x: currentRect.x * scaleX,
       y: currentRect.y * scaleY,
       width: currentRect.width * scaleX,
       height: currentRect.height * scaleY,
     };
-    // Convert to normalized coordinates.
     const normalizedRect = {
       x: actualRect.x / imgEl.naturalWidth,
       y: actualRect.y / imgEl.naturalHeight,
@@ -245,7 +338,7 @@ const Home: React.FC = () => {
                 draggable={false}
                 style={{ display: "block", maxWidth: "100%", height: "auto" }}
               />
-              {/* Render finalized rectangle overlays */}
+              {/* Render overlays for each rectangle */}
               {rectangles.map((rect, idx) => (
                 <div
                   key={idx}
@@ -260,7 +353,14 @@ const Home: React.FC = () => {
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleEditRectangle(idx);
+                    const newLabel = window.prompt("Edit label for this section", rect.label || "");
+                    if (newLabel !== null) {
+                      setRectangles((prev) => {
+                        const updated = [...prev];
+                        updated[idx].label = newLabel || "Unnamed Section";
+                        return updated;
+                      });
+                    }
                   }}
                   onMouseDown={(e) => e.stopPropagation()}
                 >
@@ -286,7 +386,9 @@ const Home: React.FC = () => {
                         onMouseDown={(e) => e.stopPropagation()}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeleteRectangle(idx);
+                          if (window.confirm("Delete this section?")) {
+                            setRectangles((prev) => prev.filter((_, i) => i !== idx));
+                          }
                         }}
                         style={{
                           marginLeft: "4px",
@@ -308,7 +410,6 @@ const Home: React.FC = () => {
                   )}
                 </div>
               ))}
-              {/* Render the rectangle currently being drawn */}
               {currentRect && (
                 <div
                   style={{
@@ -322,6 +423,20 @@ const Home: React.FC = () => {
                 />
               )}
             </div>
+          </div>
+
+          {/* Auto Generate Sections UI */}
+          <div style={{ marginTop: "1rem" }}>
+            <button onClick={handleAutoGenerateSections} disabled={loading}>
+              {loading ? "Processing OCR..." : "Auto Generate Sections"}
+            </button>
+          </div>
+
+          {/* Adjust Overlays UI */}
+          <div style={{ marginTop: "1rem" }}>
+            <button onClick={handleAdjustOverlays} disabled={loading || !currentTemplate || !currentTemplate.anchor}>
+              Adjust Overlays for Anchor Offset
+            </button>
           </div>
 
           {/* Save and Load Template UI */}
