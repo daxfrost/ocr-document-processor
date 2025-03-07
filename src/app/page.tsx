@@ -3,10 +3,10 @@
 import { useState, useRef, useEffect } from "react";
 
 interface Rectangle {
-  // Coordinates relative to the displayed image (for overlay drawing)
+  // Coordinates for drawing on the screen (in pixels)
   display: { x: number; y: number; width: number; height: number };
-  // Coordinates relative to the actual image pixels
-  actual: { x: number; y: number; width: number; height: number };
+  // Normalized coordinates (relative values between 0 and 1) based on the document's natural dimensions
+  normalized: { x: number; y: number; width: number; height: number };
   // Label for the defined section
   label?: string;
 }
@@ -87,7 +87,8 @@ const Home: React.FC = () => {
     }
   };
 
-  // Process the image by iterating over all defined rectangles
+  // Process the image by iterating over all defined (normalized) rectangles.
+  // It converts each normalized rectangle back to actual coordinates based on the current image's natural dimensions.
   const handleProcessDocument = async () => {
     if (!selectedFile) return;
     if (rectangles.length === 0) {
@@ -112,16 +113,22 @@ const Home: React.FC = () => {
 
     worker.load();
 
+    const imgEl = imageRef.current;
+    if (!imgEl) return;
+    const naturalWidth = imgEl.naturalWidth;
+    const naturalHeight = imgEl.naturalHeight;
+
     const sections: Array<{ label: string; text: string }> = [];
-    // Process each rectangle sequentially
+    // Process each rectangle sequentially by converting normalized coordinates to actual coordinates.
     for (const rect of rectangles) {
+      const actualRect = {
+        left: rect.normalized.x * naturalWidth,
+        top: rect.normalized.y * naturalHeight,
+        width: rect.normalized.width * naturalWidth,
+        height: rect.normalized.height * naturalHeight,
+      };
       const { data } = await worker.recognize(selectedFile, {
-        rectangle: {
-          left: rect.actual.x,
-          top: rect.actual.y,
-          width: rect.actual.width,
-          height: rect.actual.height,
-        },
+        rectangle: actualRect,
       });
       sections.push({
         label: rect.label || "Unnamed Section",
@@ -184,6 +191,8 @@ const Home: React.FC = () => {
     setCurrentRect(newRect);
   };
 
+  // On mouse up, compute the "actual" rectangle based on the current image dimensions,
+  // then convert those values to normalized coordinates (i.e. values between 0 and 1).
   const handleMouseUp = () => {
     if (!dragging || !currentRect || !imageRef.current || !imageContainerRef.current) return;
     setDragging(false);
@@ -191,16 +200,24 @@ const Home: React.FC = () => {
     const imgEl = imageRef.current;
     const scaleX = imgEl.naturalWidth / containerRect.width;
     const scaleY = imgEl.naturalHeight / containerRect.height;
+    // Compute the absolute (actual) coordinates in the natural resolution.
     const actualRect = {
       x: currentRect.x * scaleX,
       y: currentRect.y * scaleY,
       width: currentRect.width * scaleX,
       height: currentRect.height * scaleY,
     };
+    // Convert to normalized coordinates.
+    const normalizedRect = {
+      x: actualRect.x / imgEl.naturalWidth,
+      y: actualRect.y / imgEl.naturalHeight,
+      width: actualRect.width / imgEl.naturalWidth,
+      height: actualRect.height / imgEl.naturalHeight,
+    };
     const label = window.prompt("Enter label for this section", "");
     setRectangles((prev) => [
       ...prev,
-      { display: currentRect, actual: actualRect, label: label || "Unnamed Section" },
+      { display: currentRect, normalized: normalizedRect, label: label || "Unnamed Section" },
     ]);
     setCurrentRect(null);
   };
@@ -242,10 +259,10 @@ const Home: React.FC = () => {
                     cursor: "pointer",
                   }}
                   onClick={(e) => {
-                    e.stopPropagation(); // Prevent parent handlers from firing
+                    e.stopPropagation();
                     handleEditRectangle(idx);
                   }}
-                  onMouseDown={(e) => e.stopPropagation()} // Prevent starting a new rectangle
+                  onMouseDown={(e) => e.stopPropagation()}
                 >
                   {rect.label && (
                     <div
@@ -266,7 +283,7 @@ const Home: React.FC = () => {
                     >
                       <span>{rect.label}</span>
                       <button
-                        onMouseDown={(e) => e.stopPropagation()} // Prevent parent mouseDown
+                        onMouseDown={(e) => e.stopPropagation()}
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteRectangle(idx);
