@@ -430,6 +430,9 @@ const TesseractPage: React.FC = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
       '&:hover': {
         backgroundColor: '#2d3748',
         transform: 'translateY(-1px)',
