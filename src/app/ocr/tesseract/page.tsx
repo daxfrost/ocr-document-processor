@@ -499,15 +499,27 @@ const TesseractPage: React.FC = () => {
       </div>
       
       {imagePreviewUrl && (
-        <div style={{ marginTop: "1rem", position: "relative" }} ref={imageContainerRef}>
+        <div
+          style={{
+            marginTop: "1rem",
+            position: "relative",
+            display: "inline-block",
+            width: "fit-content",
+          }}
+          ref={imageContainerRef}
+        >
           <img
             ref={imageRef}
             src={imagePreviewUrl}
             alt="Uploaded document"
             draggable={false}
             onDragStart={(e) => e.preventDefault()}
-            // In manual mode, the image no longer receives pointer events.
-            style={{ display: "block", maxWidth: "100%", height: "auto", pointerEvents: mode === "manual" ? "none" : "auto" }}
+            style={{
+              display: "block",
+              maxWidth: "100%",
+              height: "auto",
+              pointerEvents: mode === "manual" ? "none" : "auto",
+            }}
           />
           {/* In manual mode, render an overlay div that covers the entire image to capture mouse events */}
           {mode === "manual" && (

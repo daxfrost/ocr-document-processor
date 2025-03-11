@@ -46,10 +46,6 @@ const handler = async (
     const sections: OCRSection[] = [];
     for (const [index, rect] of rectangles.entries()) {
       const actualRect = {
-        // left: rect.display.x,
-        // top: rect.display.y,
-        // width: rect.display.width,
-        // height: rect.display.height,
         left: rect.normalized.x * naturalWidth,
         top: rect.normalized.y * naturalHeight,
         width: rect.normalized.width * naturalWidth,
@@ -63,14 +59,28 @@ const handler = async (
         await worker.setParameters({ tessedit_pageseg_mode: psmMode as PSM });
         const { data } = await worker.recognize(file.filepath, { rectangle: actualRect }, { blocks: true, box: true, layoutBlocks: true });
         await worker.terminate();
-        sections.push({
-          key: rect.label ?? `Section ${index + 1}`,
-          value: data.text,
-          x: actualRect.left,
-          y: actualRect.top,
-          width: actualRect.width,
-          height: actualRect.height,
-        });
+
+        // Extract the bounding box from the OCR data
+        const block = data.blocks && data.blocks[0];
+        if (block) {
+          sections.push({
+            key: rect.label ?? `Section ${index + 1}`,
+            value: block.text,
+            x: block.bbox.x0,
+            y: block.bbox.y0,
+            width: block.bbox.x1 - block.bbox.x0,
+            height: block.bbox.y1 - block.bbox.y0,
+          });
+        } else {
+          sections.push({
+            key: rect.label ?? `Section ${index + 1}`,
+            value: "No text found",
+            x: actualRect.left,
+            y: actualRect.top,
+            width: actualRect.width,
+            height: actualRect.height,
+          });
+        }
       } catch (ocrError) {
         console.error(`Error processing section ${rect.label ?? `Section ${index + 1}`}:`, ocrError);
         sections.push({
