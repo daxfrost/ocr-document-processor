@@ -32,14 +32,25 @@ const handler = async (
     const psmMode = fields.psmMode ? fields.psmMode.toString() : "3";
     let rectangles: Array<Rectangle> = [];
     try {
-      rectangles = JSON.parse(fields.rectangles as string);
+      const rectanglesString = Array.isArray(fields.rectangles) ? fields.rectangles[0] : fields.rectangles;
+      rectangles = JSON.parse(rectanglesString as string);
     } catch (parseError) {
       console.error("Error parsing rectangles JSON:", parseError);
       return res.status(400).json({ error: "Invalid rectangles JSON" });
     }
-    const naturalWidth = parseInt(fields.naturalWidth as string, 10);
-    const naturalHeight = parseInt(fields.naturalHeight as string, 10);
-    if (!naturalWidth || !naturalHeight) {
+    let naturalWidth = 0;
+    let naturalHeight = 0;
+    try {
+      const naturalWidthString = Array.isArray(fields.naturalWidth) ? fields.naturalWidth[0] : fields.naturalWidth;
+      const naturalHeightString = Array.isArray(fields.naturalHeight) ? fields.naturalHeight[0] : fields.naturalHeight;
+      if (!naturalWidthString || !naturalHeightString || naturalHeightString.length < 1 || naturalWidthString.length < 1) {
+        console.error("Missing image dimensions:", "naturalWidthString: " + naturalWidthString + "naturalHeightString:" + naturalHeightString);
+        return res.status(400).json({ error: "Missing image dimensions" });
+      }
+      naturalWidth = parseInt(naturalWidthString as string, 10);
+      naturalHeight = parseInt(naturalHeightString as string, 10);
+    } catch (parseError) {
+      console.error("Missing image dimensions:", parseError);
       return res.status(400).json({ error: "Missing image dimensions" });
     }
 
