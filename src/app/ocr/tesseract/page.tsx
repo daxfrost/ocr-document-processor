@@ -40,6 +40,33 @@ const TesseractPage: React.FC = () => {
     }
   }, [loading]);
 
+  // Add resize handler
+  useEffect(() => {
+    const handleResize = () => {
+      if (!imageRef.current || !imageContainerRef.current) return;
+      const containerRect = imageContainerRef.current.getBoundingClientRect();
+      const imgEl = imageRef.current;
+      const scaleX = containerRect.width / imgEl.naturalWidth;
+      const scaleY = containerRect.height / imgEl.naturalHeight;
+
+      // Update rectangles with new display positions
+      setRectangles(prevRectangles => 
+        prevRectangles.map(rect => ({
+          ...rect,
+          display: {
+            x: rect.normalized.x * imgEl.naturalWidth * scaleX,
+            y: rect.normalized.y * imgEl.naturalHeight * scaleY,
+            width: rect.normalized.width * imgEl.naturalWidth * scaleX,
+            height: rect.normalized.height * imgEl.naturalHeight * scaleY
+          }
+        }))
+      );
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files && event.target.files[0];
     if (file) {
@@ -86,8 +113,6 @@ const TesseractPage: React.FC = () => {
     setDragging(false);
     const containerRect = imageContainerRef.current.getBoundingClientRect();
     const imgEl = imageRef.current;
-    console.log("containerRect.height: ", containerRect.height);
-    console.log("containerRect.width: ", containerRect.width);
     const scaleX = imgEl.naturalWidth / containerRect.width;
     const scaleY = imgEl.naturalHeight / containerRect.height;
     const normalizedRect = {
