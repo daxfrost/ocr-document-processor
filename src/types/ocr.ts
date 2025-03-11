@@ -1,6 +1,10 @@
 export interface OCRSection {
     key: string;
     value: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
   }
   
   export interface Rectangle {
@@ -18,3 +22,4 @@ export interface OCRSection {
     anchor?: { x: number; y: number } | null;
   }
   
+  export type Mode = "automatic" | "manual";

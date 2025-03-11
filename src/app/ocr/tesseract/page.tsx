@@ -1,9 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react";
-import { Rectangle, Template, OCRSection } from "../../types/ocr"; // Assume shared types are defined here
-
-type Mode = "automatic" | "manual";
+import { Rectangle, Mode, OCRSection } from "../../../types/ocr"; // Assume shared types are defined here
 
 const TesseractPage: React.FC = () => {
   const [mode, setMode] = useState<Mode>("automatic");
@@ -19,7 +17,6 @@ const TesseractPage: React.FC = () => {
   const [dragging, setDragging] = useState(false);
 
   // (Optional states for template anchors, etc. not shown here)
-
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 

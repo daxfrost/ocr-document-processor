@@ -1,8 +1,8 @@
 // src/pages/api/ocr/tesseract/manual.ts
 import type { NextApiRequest, NextApiResponse } from "next";
 import formidable from "formidable";
-import { createWorker } from "tesseract.js";
-import { Rectangle } from "@/types/ocr";
+import { createWorker, PSM } from "tesseract.js";
+import { OCRSection, Rectangle } from "@/types/ocr";
 
 export const config = {
   api: { bodyParser: false },
@@ -13,7 +13,10 @@ interface Section {
   value: string;
 }
 
-const handler = async (req: NextApiRequest, res: NextApiResponse<Section[] | { error: string }>) => {
+const handler = async (
+  req: NextApiRequest, 
+  res: NextApiResponse<{ sections: OCRSection[] } | { error: string }>
+) => {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method not allowed" });
@@ -40,7 +43,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse<Section[] | { e
       return res.status(400).json({ error: "Missing image dimensions" });
     }
 
-    const sections: Section[] = [];
+    const sections: OCRSection[] = [];
     for (const [index, rect] of rectangles.entries()) {
       const actualRect = {
         left: rect.normalized.x * naturalWidth,
@@ -53,18 +56,26 @@ const handler = async (req: NextApiRequest, res: NextApiResponse<Section[] | { e
         const worker = await createWorker("eng", undefined, {
           logger: (m) => console.log(`Manual OCR for section ${rect.label ?? `Section ${index + 1}`}:`, m),
         });
-        await worker.setParameters({ tessedit_pageseg_mode: psmMode });
+        await worker.setParameters({ tessedit_pageseg_mode: psmMode as PSM });
         const { data } = await worker.recognize(file.filepath, { rectangle: actualRect }, { blocks: true, box: true, layoutBlocks: true });
         await worker.terminate();
         sections.push({
           key: rect.label ?? `Section ${index + 1}`,
           value: data.text,
+          x: actualRect.left,
+          y: actualRect.top,
+          width: actualRect.width,
+          height: actualRect.height,
         });
       } catch (ocrError) {
         console.error(`Error processing section ${rect.label ?? `Section ${index + 1}`}:`, ocrError);
         sections.push({
           key: `Section ${index + 1}`,
           value: "Error during OCR",
+          x: actualRect.left,
+          y: actualRect.top,
+          width: actualRect.width,
+          height: actualRect.height,
         });
       }
     }
