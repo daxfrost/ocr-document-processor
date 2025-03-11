@@ -9,7 +9,7 @@ const TesseractPage: React.FC = () => {
   const [mode, setMode] = useState<Mode>("automatic");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [psmMode, setPsmMode] = useState<string>("3");
   const [ocrSections, setOcrSections] = useState<OCRSection[]>([]);
   // For manual mode: user-drawn rectangles.
@@ -33,6 +33,15 @@ const TesseractPage: React.FC = () => {
       }
     }
   }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      const extractedSectionsElement = document.querySelector('h2');
+      if (extractedSectionsElement && extractedSectionsElement.textContent === 'Extracted Sections') {
+        extractedSectionsElement.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, [loading]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files && event.target.files[0];
@@ -216,7 +225,7 @@ const TesseractPage: React.FC = () => {
     const formData = new FormData();
     formData.append("file", selectedFile);
     formData.append("psmMode", psmMode);
-    formData.append("rectangles", JSON.stringify(rectangles.map(rect => rect.normalized)));
+    formData.append("rectangles", JSON.stringify(rectangles));
     formData.append("naturalWidth", naturalWidth.toString());
     formData.append("naturalHeight", naturalHeight.toString());
     
@@ -259,16 +268,192 @@ const TesseractPage: React.FC = () => {
     setLoading(false);
   };
 
+  // Add this CSS at the top of your component
+  const styles = {
+    toggleContainer: {
+      display: 'inline-flex',
+      backgroundColor: '#f0f0f0',
+      padding: '4px',
+      borderRadius: '8px',
+      gap: '4px'
+    },
+    toggleButton: {
+      padding: '8px 16px',
+      border: 'none',
+      borderRadius: '6px',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      fontSize: '14px',
+      fontWeight: 500,
+      height: '40px',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    },
+    activeButton: {
+      backgroundColor: '#fff',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      color: '#000',
+    },
+    inactiveButton: {
+      backgroundColor: 'transparent',
+      color: '#666',
+    },
+    heading: {
+      fontSize: '2.5rem',
+      fontWeight: '600',
+      color: '#2d3748',
+      marginBottom: '1.5rem',
+      borderBottom: '3px solid #e2e8f0',
+      paddingBottom: '0.5rem',
+      background: 'linear-gradient(to right, #2d3748, #4a5568)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      letterSpacing: '-0.025em'
+    },
+    controlsContainer: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '1.5rem',
+      marginBottom: '2rem',
+    },
+    selectorContainer: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5rem',
+    },
+    label: {
+      fontSize: '14px',
+      fontWeight: '500',
+      color: '#e2e8f0',
+    },
+    select: {
+      padding: '8px 12px',
+      borderRadius: '6px',
+      border: '1px solid #e2e8f0',
+      backgroundColor: '#fff',
+      fontSize: '14px',
+      color: '#2d3748',
+      cursor: 'pointer',
+      outline: 'none',
+      transition: 'all 0.2s ease',
+      height: '40px',
+      '&:hover': {
+        borderColor: '#cbd5e0',
+      },
+      '&:focus': {
+        borderColor: '#4a5568',
+        boxShadow: '0 0 0 3px rgba(74, 85, 104, 0.1)',
+      },
+    },
+    actionButton: {
+      backgroundColor: '#4a5568',
+      color: '#fff',
+      padding: '10px 20px',
+      borderRadius: '8px',
+      border: 'none',
+      fontSize: '16px',
+      fontWeight: '500',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      height: '40px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      '&:hover': {
+        backgroundColor: '#2d3748',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+      },
+      '&:disabled': {
+        backgroundColor: '#cbd5e0',
+        cursor: 'not-allowed',
+        transform: 'none',
+      },
+    },
+  };
+
   return (
     <div style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}>
-      <h1>Tesseract OCR Testing</h1>
-      <nav style={{ marginBottom: "1rem" }}>
-        <button onClick={() => setMode("automatic")}>Automatic Extraction</button>
-        <button onClick={() => setMode("manual")}>Manual Extraction</button>
-      </nav>
-      <div style={{ marginTop: "1rem" }}>
-        <input type="file" accept="image/*" onChange={handleFileChange} />
+      <h1 style={styles.heading}>Tesseract</h1>
+      
+      <div style={styles.controlsContainer}>
+        <div style={styles.toggleContainer}>
+          <button
+            onClick={() => setMode("automatic")}
+            style={{
+              ...styles.toggleButton,
+              ...(mode === "automatic" ? styles.activeButton : styles.inactiveButton),
+            }}
+          >
+            Automatic Extraction
+          </button>
+          <button
+            onClick={() => setMode("manual")}
+            style={{
+              ...styles.toggleButton,
+              ...(mode === "manual" ? styles.activeButton : styles.inactiveButton),
+            }}
+          >
+            Manual Extraction
+          </button>
+        </div>
+
+        <div style={styles.selectorContainer}>
+          <label style={styles.label}>Page Segmentation Mode:</label>
+          <select 
+            value={psmMode} 
+            onChange={(e) => setPsmMode(e.target.value)}
+            style={styles.select}
+          >
+            <option value="0">0 - OSD only</option>
+            <option value="1">1 - Auto segmentation with OSD</option>
+            <option value="3">3 - Fully automatic segmentation, no OSD</option>
+            <option value="4">4 - Assume a single column of text</option>
+            <option value="6">6 - Assume a single uniform block of text</option>
+            <option value="7">7 - Treat image as a single text line</option>
+            <option value="8">8 - Treat image as a single word</option>
+            <option value="10">10 - Treat image as a single character</option>
+          </select>
+        </div>
+
+        <button 
+          onClick={mode === "automatic" ? handleAutomaticExtraction : handleManualExtraction} 
+          disabled={loading}
+          style={styles.actionButton}
+        >
+          {loading ? "Processing..." : `Process Document ${mode === "automatic" ? "Automatically" : "Manually"}`}
+        </button>
       </div>
+
+      <div style={{ marginTop: "1rem" }}>
+        <input 
+          type="file" 
+          accept="image/*" 
+          onChange={handleFileChange} 
+          style={{ display: 'none' }} // Hide the default file input
+          id="fileInput"
+        />
+        <button 
+          onClick={() => document.getElementById('fileInput')?.click()} 
+          style={{
+            backgroundColor: '#4a5568',
+            color: '#fff',
+            padding: '10px 20px',
+            borderRadius: '8px',
+            border: 'none',
+            fontSize: '16px',
+            fontWeight: '500',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          }}
+        >
+          Upload Document
+        </button>
+      </div>
+      
       {imagePreviewUrl && (
         <div style={{ marginTop: "1rem", position: "relative" }} ref={imageContainerRef}>
           <img
@@ -298,33 +483,6 @@ const TesseractPage: React.FC = () => {
               {renderManualOverlays()}
             </div>
           )}
-        </div>
-      )}
-      <div style={{ marginTop: "1rem" }}>
-        <label>Page Segmentation Mode: </label>
-        <select value={psmMode} onChange={(e) => setPsmMode(e.target.value)}>
-          <option value="0">0 - OSD only</option>
-          <option value="1">1 - Auto segmentation with OSD</option>
-          <option value="3">3 - Fully automatic segmentation, no OSD</option>
-          <option value="4">4 - Assume a single column of text</option>
-          <option value="6">6 - Assume a single uniform block of text</option>
-          <option value="7">7 - Treat image as a single text line</option>
-          <option value="8">8 - Treat image as a single word</option>
-          <option value="10">10 - Treat image as a single character</option>
-        </select>
-      </div>
-      {mode === "automatic" && (
-        <div style={{ marginTop: "1rem" }}>
-          <button onClick={handleAutomaticExtraction} disabled={loading}>
-            {loading ? "Processing OCR via API..." : "Process Document Automatically"}
-          </button>
-        </div>
-      )}
-      {mode === "manual" && (
-        <div style={{ marginTop: "1rem" }}>
-          <button onClick={handleManualExtraction} disabled={loading}>
-            {loading ? "Processing OCR via API..." : "Process Document Manually"}
-          </button>
         </div>
       )}
       {ocrSections.length > 0 && (
