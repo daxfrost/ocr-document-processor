@@ -86,6 +86,8 @@ const TesseractPage: React.FC = () => {
     setDragging(false);
     const containerRect = imageContainerRef.current.getBoundingClientRect();
     const imgEl = imageRef.current;
+    console.log("containerRect.height: ", containerRect.height);
+    console.log("containerRect.width: ", containerRect.width);
     const scaleX = imgEl.naturalWidth / containerRect.width;
     const scaleY = imgEl.naturalHeight / containerRect.height;
     const normalizedRect = {
@@ -196,6 +198,51 @@ const TesseractPage: React.FC = () => {
             }}
           />
         )}
+      </>
+    );
+  };
+
+  // Render overlays for OCR sections
+  const renderOCROverlays = () => {
+    if (!ocrSections || !imageRef.current || !imageContainerRef.current) return null;
+    
+    const containerRect = imageContainerRef.current.getBoundingClientRect();
+    const imgEl = imageRef.current;
+    const scaleX = containerRect.width / imgEl.naturalWidth;
+    const scaleY = containerRect.height / imgEl.naturalHeight;
+
+    return (
+      <>
+        {ocrSections.map((section, idx) => (
+          <div
+            key={idx}
+            style={{
+              position: "absolute",
+              left: section.x * scaleX,
+              top: section.y * scaleY,
+              width: section.width * scaleX,
+              height: section.height * scaleY,
+              border: "2px solid green",
+              pointerEvents: "none",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                top: -24,
+                left: 0,
+                backgroundColor: "rgba(0, 128, 0, 0.8)",
+                color: "#fff",
+                padding: "4px 8px",
+                fontSize: "12px",
+                borderRadius: "4px",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {section.key}
+            </div>
+          </div>
+        ))}
       </>
     );
   };
@@ -480,6 +527,8 @@ const TesseractPage: React.FC = () => {
               {renderManualOverlays()}
             </div>
           )}
+          {/* Render OCR section overlays */}
+          {ocrSections.length > 0 && renderOCROverlays()}
         </div>
       )}
       {ocrSections.length > 0 && (

@@ -46,6 +46,10 @@ const handler = async (
     const sections: OCRSection[] = [];
     for (const [index, rect] of rectangles.entries()) {
       const actualRect = {
+        // left: rect.display.x,
+        // top: rect.display.y,
+        // width: rect.display.width,
+        // height: rect.display.height,
         left: rect.normalized.x * naturalWidth,
         top: rect.normalized.y * naturalHeight,
         width: rect.normalized.width * naturalWidth,
