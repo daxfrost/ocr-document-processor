@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react";
-import { Rectangle, Mode, OCRSection } from "../../../types/ocr"; // Assume shared types are defined here
+import { Rectangle, Mode, OCRSection } from "@/types/ocr"; // Assume shared types are defined here
 
 const TesseractPage: React.FC = () => {
   const [mode, setMode] = useState<Mode>("automatic");

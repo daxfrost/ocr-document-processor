@@ -8,11 +8,6 @@ export const config = {
   api: { bodyParser: false },
 };
 
-interface Section {
-  key: string;
-  value: string;
-}
-
 const handler = async (
   req: NextApiRequest, 
   res: NextApiResponse<{ sections: OCRSection[] } | { error: string }>

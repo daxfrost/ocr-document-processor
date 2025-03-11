@@ -2,7 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import formidable from "formidable";
 import { createWorker, PSM } from "tesseract.js";
-import { OCRSection } from "../../../../types/ocr"
+import { OCRSection } from "@/types/ocr"
 
 export const config = {
   api: { bodyParser: false },
