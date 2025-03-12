@@ -95,7 +95,7 @@ const TesseractPage: React.FC = () => {
       const scaleY = containerRect.height / imgEl.naturalHeight;
 
       // Update rectangles with new display positions
-      setRectangles(prevRectangles => 
+      setRectangles(prevRectangles =>
         prevRectangles.map(rect => ({
           ...rect,
           display: {
@@ -240,7 +240,7 @@ const TesseractPage: React.FC = () => {
   // Render overlays for OCR sections
   const renderOCROverlays = () => {
     if (!ocrSections || !imageRef.current || !imageContainerRef.current) return null;
-    
+
     const containerRect = imageContainerRef.current.getBoundingClientRect();
     const imgEl = imageRef.current;
     const scaleX = containerRect.width / imgEl.naturalWidth;
@@ -293,7 +293,7 @@ const TesseractPage: React.FC = () => {
     formData.append("rectangles", JSON.stringify(rectangles));
     formData.append("naturalWidth", naturalWidth.toString());
     formData.append("naturalHeight", naturalHeight.toString());
-    
+
     try {
       const response = await fetch("/api/tesseract/manual", {
         method: "POST",
@@ -391,7 +391,7 @@ const TesseractPage: React.FC = () => {
   return (
     <Container>
       <Heading>Tesseract</Heading>
-      
+
       <div style={theme.components.controlsContainer}>
         <div style={theme.components.toggleContainer}>
           <button
@@ -414,50 +414,50 @@ const TesseractPage: React.FC = () => {
           </button>
         </div>
 
-        <div style={theme.components.selectorContainer}>
-          <label style={theme.components.label}>Page Segmentation Mode:</label>
-          <select 
-            value={psmMode} 
-            onChange={(e) => setPsmMode(e.target.value)}
-            style={theme.components.select}
-          >
-            <option value="0">0 - OSD only</option>
-            <option value="1">1 - Auto segmentation with OSD</option>
-            <option value="3">3 - Fully automatic segmentation, no OSD</option>
-            <option value="4">4 - Assume a single column of text</option>
-            <option value="6">6 - Assume a single uniform block of text</option>
-            <option value="7">7 - Treat image as a single text line</option>
-            <option value="8">8 - Treat image as a single word</option>
-            <option value="10">10 - Treat image as a single character</option>
-          </select>
-        </div>
-
-        <Button 
-          onClick={mode === Mode.Automatic ? handleAutomaticExtraction : handleManualExtraction} 
+        <Button
+          onClick={mode === Mode.Automatic ? handleAutomaticExtraction : handleManualExtraction}
           disabled={loading}
         >
           {loading ? "Processing..." : `Process Document ${mode === Mode.Automatic ? "Automatically" : "Manually"}`}
         </Button>
       </div>
 
-      <div style={{ marginTop: "1rem" }}>
-        <input 
-          type="file" 
-          accept="image/*" 
-          onChange={handleFileChange} 
+      <div style={theme.components.selectorContainer}>
+        <label style={theme.components.label}>Page Segmentation Mode:</label>
+        <select
+          value={psmMode}
+          onChange={(e) => setPsmMode(e.target.value)}
+          style={theme.components.select}
+        >
+          <option value="0">0 - OSD only</option>
+          <option value="1">1 - Auto segmentation with OSD</option>
+          <option value="3">3 - Fully automatic segmentation, no OSD</option>
+          <option value="4">4 - Assume a single column of text</option>
+          <option value="6">6 - Assume a single uniform block of text</option>
+          <option value="7">7 - Treat image as a single text line</option>
+          <option value="8">8 - Treat image as a single word</option>
+          <option value="10">10 - Treat image as a single character</option>
+        </select>
+      </div>
+
+      <div style={{ marginTop: "1rem", display: "flex", alignItems: "center" }}>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
           style={{ display: 'none' }}
           id="fileInput"
         />
-        <Button onClick={() => document.getElementById('fileInput')?.click()}>
+        <Button onClick={() => document.getElementById('fileInput')?.click()} style={{ marginRight: "1rem" }}>
           Upload Document
         </Button>
 
         {mode === Mode.Manual && (
-          <div style={{ marginTop: "1rem", display: "flex", alignItems: "center" }}>
+          <>
             <Button onClick={handleSaveTemplate} style={{ marginRight: "1rem" }}>Save Template</Button>
             <div style={{ display: "flex", alignItems: "center" }}>
               <label style={{ ...theme.components.label, marginRight: "0.5rem" }}>Load Template:</label>
-              <select 
+              <select
                 value={selectedTemplate || ""}
                 onChange={(e) => handleLoadTemplate(e.target.value)}
                 style={theme.components.select}
@@ -473,10 +473,10 @@ const TesseractPage: React.FC = () => {
                 </Button>
               )}
             </div>
-          </div>
+          </>
         )}
       </div>
-      
+
       {imagePreviewUrl && (
         <div
           style={{
