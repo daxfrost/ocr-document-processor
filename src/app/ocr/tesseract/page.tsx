@@ -2,6 +2,42 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Rectangle, Mode, OCRSection } from "@/types/ocr"; // Assume shared types are defined here
+import styled, { useTheme } from 'styled-components';
+
+const Container = styled.div`
+  padding: ${({ theme }) => theme.spacing.large};
+  font-family: ${({ theme }) => theme.fonts.main};
+  color: ${({ theme }) => theme.colors.text};
+`;
+
+const Heading = styled.h1`
+  font-size: ${({ theme }) => theme.fontSizes.heading};
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.text};
+  margin-bottom: ${({ theme }) => theme.spacing.medium};
+  border-bottom: 3px solid ${({ theme }) => theme.colors.border};
+  padding-bottom: ${({ theme }) => theme.spacing.small};
+`;
+
+const Button = styled.button`
+  background-color: ${({ theme }) => theme.colors.primary};
+  color: ${({ theme }) => theme.colors.buttonText};
+  padding: ${({ theme }) => theme.spacing.small} ${({ theme }) => theme.spacing.medium};
+  border-radius: ${({ theme }) => theme.borderRadius};
+  border: none;
+  font-size: ${({ theme }) => theme.fontSizes.body};
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: ${({ theme }) => theme.boxShadow};
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
 
 const TesseractPage: React.FC = () => {
   const [mode, setMode] = useState<Mode>("automatic");
@@ -19,6 +55,8 @@ const TesseractPage: React.FC = () => {
   // (Optional states for template anchors, etc. not shown here)
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+
+  const theme = useTheme();
 
   useEffect(() => {
     const saved = localStorage.getItem("documentTemplates");
@@ -337,126 +375,17 @@ const TesseractPage: React.FC = () => {
     setLoading(false);
   };
 
-  // Add this CSS at the top of your component
-  const styles = {
-    toggleContainer: {
-      display: 'inline-flex',
-      backgroundColor: '#f0f0f0',
-      padding: '4px',
-      borderRadius: '8px',
-      gap: '4px'
-    },
-    toggleButton: {
-      padding: '8px 16px',
-      border: 'none',
-      borderRadius: '6px',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      fontSize: '14px',
-      fontWeight: 500,
-      height: '40px',
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-    },
-    activeButton: {
-      backgroundColor: '#fff',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-      color: '#000',
-    },
-    inactiveButton: {
-      backgroundColor: 'transparent',
-      color: '#666',
-    },
-    heading: {
-      fontSize: '2.5rem',
-      fontWeight: '600',
-      color: '#2d3748',
-      marginBottom: '1.5rem',
-      borderBottom: '3px solid #e2e8f0',
-      paddingBottom: '0.5rem',
-      background: 'linear-gradient(to right, #2d3748, #4a5568)',
-      WebkitBackgroundClip: 'text',
-      WebkitTextFillColor: 'transparent',
-      letterSpacing: '-0.025em'
-    },
-    controlsContainer: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '1.5rem',
-      marginBottom: '2rem',
-    },
-    selectorContainer: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.5rem',
-    },
-    label: {
-      fontSize: '14px',
-      fontWeight: '500',
-      color: '#e2e8f0',
-    },
-    select: {
-      padding: '8px 12px',
-      borderRadius: '6px',
-      border: '1px solid #e2e8f0',
-      backgroundColor: '#fff',
-      fontSize: '14px',
-      color: '#2d3748',
-      cursor: 'pointer',
-      outline: 'none',
-      transition: 'all 0.2s ease',
-      height: '40px',
-      '&:hover': {
-        borderColor: '#cbd5e0',
-      },
-      '&:focus': {
-        borderColor: '#4a5568',
-        boxShadow: '0 0 0 3px rgba(74, 85, 104, 0.1)',
-      },
-    },
-    actionButton: {
-      backgroundColor: '#4a5568',
-      color: '#fff',
-      padding: '10px 20px',
-      borderRadius: '8px',
-      border: 'none',
-      fontSize: '16px',
-      fontWeight: '500',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-      height: '40px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      whiteSpace: "nowrap",
-      overflow: "hidden",
-      textOverflow: "ellipsis",
-      '&:hover': {
-        backgroundColor: '#2d3748',
-        transform: 'translateY(-1px)',
-        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-      },
-      '&:disabled': {
-        backgroundColor: '#cbd5e0',
-        cursor: 'not-allowed',
-        transform: 'none',
-      },
-    },
-  };
-
   return (
-    <div style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}>
-      <h1 style={styles.heading}>Tesseract</h1>
+    <Container>
+      <Heading>Tesseract</Heading>
       
-      <div style={styles.controlsContainer}>
-        <div style={styles.toggleContainer}>
+      <div style={theme.components.controlsContainer}>
+        <div style={theme.components.toggleContainer}>
           <button
             onClick={() => setMode("automatic")}
             style={{
-              ...styles.toggleButton,
-              ...(mode === "automatic" ? styles.activeButton : styles.inactiveButton),
+              ...theme.components.toggleButton,
+              ...(mode === "automatic" ? theme.components.activeButton : theme.components.inactiveButton),
             }}
           >
             Automatic Extraction
@@ -464,20 +393,20 @@ const TesseractPage: React.FC = () => {
           <button
             onClick={() => setMode("manual")}
             style={{
-              ...styles.toggleButton,
-              ...(mode === "manual" ? styles.activeButton : styles.inactiveButton),
+              ...theme.components.toggleButton,
+              ...(mode === "manual" ? theme.components.activeButton : theme.components.inactiveButton),
             }}
           >
             Manual Extraction
           </button>
         </div>
 
-        <div style={styles.selectorContainer}>
-          <label style={styles.label}>Page Segmentation Mode:</label>
+        <div style={theme.components.selectorContainer}>
+          <label style={theme.components.label}>Page Segmentation Mode:</label>
           <select 
             value={psmMode} 
             onChange={(e) => setPsmMode(e.target.value)}
-            style={styles.select}
+            style={theme.components.select}
           >
             <option value="0">0 - OSD only</option>
             <option value="1">1 - Auto segmentation with OSD</option>
@@ -490,13 +419,12 @@ const TesseractPage: React.FC = () => {
           </select>
         </div>
 
-        <button 
+        <Button 
           onClick={mode === "automatic" ? handleAutomaticExtraction : handleManualExtraction} 
           disabled={loading}
-          style={styles.actionButton}
         >
           {loading ? "Processing..." : `Process Document ${mode === "automatic" ? "Automatically" : "Manually"}`}
-        </button>
+        </Button>
       </div>
 
       <div style={{ marginTop: "1rem" }}>
@@ -504,26 +432,12 @@ const TesseractPage: React.FC = () => {
           type="file" 
           accept="image/*" 
           onChange={handleFileChange} 
-          style={{ display: 'none' }} // Hide the default file input
+          style={{ display: 'none' }}
           id="fileInput"
         />
-        <button 
-          onClick={() => document.getElementById('fileInput')?.click()} 
-          style={{
-            backgroundColor: '#4a5568',
-            color: '#fff',
-            padding: '10px 20px',
-            borderRadius: '8px',
-            border: 'none',
-            fontSize: '16px',
-            fontWeight: '500',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          }}
-        >
+        <Button onClick={() => document.getElementById('fileInput')?.click()}>
           Upload Document
-        </button>
+        </Button>
       </div>
       
       {imagePreviewUrl && (
@@ -583,7 +497,7 @@ const TesseractPage: React.FC = () => {
           ))}
         </div>
       )}
-    </div>
+    </Container>
   );
 };
 
