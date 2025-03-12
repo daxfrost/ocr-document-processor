@@ -52,11 +52,7 @@ const TesseractPage: React.FC = () => {
   const [psmMode, setPsmMode] = useState<string>("3");
   const [ocrSections, setOcrSections] = useState<OCRSection<string>[]>([]);
   // For manual mode: user-drawn rectangles.
-  const [rectangles, setRectangles] = useState<Rectangle[]>(() => {
-    const savedRectangles = localStorage.getItem("manualRectangles");
-    return savedRectangles ? JSON.parse(savedRectangles) : [];
-  });
-  const [originalTemplateRectangles, setOriginalTemplateRectangles] = useState<Rectangle[]>([]);
+  const [rectangles, setRectangles] = useState<Rectangle[]>([]);
   const [currentRect, setCurrentRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [dragging, setDragging] = useState(false);
   const [templates, setTemplates] = useState<Template<Rectangle>[]>([]);
@@ -88,10 +84,6 @@ const TesseractPage: React.FC = () => {
       }
     }
   }, [loading]);
-
-  useEffect(() => {
-    localStorage.setItem("manualRectangles", JSON.stringify(rectangles));
-  }, [rectangles]);
 
   // Add resize handler
   useEffect(() => {
@@ -128,7 +120,6 @@ const TesseractPage: React.FC = () => {
       reader.onloadend = () => {
         setImagePreviewUrl(reader.result as string);
         setRectangles([]);
-        setOriginalTemplateRectangles([]);
         setOcrSections([]);
       };
       reader.readAsDataURL(file);
@@ -177,7 +168,6 @@ const TesseractPage: React.FC = () => {
     const label = window.prompt("Enter label for this section", "") || "Unnamed Section";
     const newRect: Rectangle = { display: currentRect, normalized: normalizedRect, label };
     setRectangles((prev) => [...prev, newRect]);
-    setOriginalTemplateRectangles((prev) => [...prev, newRect]);
     setCurrentRect(null);
   };
 
@@ -205,11 +195,6 @@ const TesseractPage: React.FC = () => {
                   updated[idx].label = newLabel || "Unnamed Section";
                   return updated;
                 });
-                setOriginalTemplateRectangles((prev) => {
-                  const updated = [...prev];
-                  updated[idx].label = newLabel || "Unnamed Section";
-                  return updated;
-                });
               }
             }}
             onMouseDown={(e) => e.stopPropagation()}
@@ -226,7 +211,6 @@ const TesseractPage: React.FC = () => {
                     e.stopPropagation();
                     if (window.confirm("Delete this section?")) {
                       setRectangles((prev) => prev.filter((_, i) => i !== idx));
-                      setOriginalTemplateRectangles((prev) => prev.filter((_, i) => i !== idx));
                     }
                   }}
                   style={theme.components.manualOverlayButton}
@@ -353,7 +337,14 @@ const TesseractPage: React.FC = () => {
     const templateName = window.prompt("Enter template name", "");
     if (!templateName) return;
     const newTemplate: Template<Rectangle> = { name: templateName, rectangles };
-    const updatedTemplates = [...templates, newTemplate];
+    const existingTemplateIndex = templates.findIndex(t => t.name === templateName);
+    let updatedTemplates;
+    if (existingTemplateIndex !== -1) {
+      updatedTemplates = [...templates];
+      updatedTemplates[existingTemplateIndex] = newTemplate;
+    } else {
+      updatedTemplates = [...templates, newTemplate];
+    }
     setTemplates(updatedTemplates);
     localStorage.setItem("documentTemplates", JSON.stringify(updatedTemplates));
   };
@@ -362,7 +353,6 @@ const TesseractPage: React.FC = () => {
     const template = templates.find(t => t.name === templateName);
     if (template) {
       setRectangles(template.rectangles);
-      setOriginalTemplateRectangles(template.rectangles);
       setSelectedTemplate(templateName);
       applyTemplateToImage(template.rectangles);
     }
