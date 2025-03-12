@@ -26,3 +26,12 @@ export enum Mode {
     Automatic = "automatic",
     Manual = "manual",
 }
+
+export enum Provider {
+  Tesseract = "tesseract",
+  EasyOCR = "easyocr",
+}
+
+export interface OCRProvider {
+  onConfigurationChange: (config: { [key: string]: string }) => void;
+}

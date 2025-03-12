@@ -1,9 +1,11 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react";
-import { Rectangle, Mode, OCRSection, Template } from "@/types/ocr"; // Assume shared types are defined here
+import { Rectangle, Mode, OCRSection, Template, Provider } from "@/types/ocr"; // Assume shared types are defined here
 import styled from 'styled-components';
 import { useTheme } from 'styled-components';
+import TesseractProvider from "@/app/ocr/components/TesseractProvider"; // Import the new component
+import { useSearchParams } from "next/navigation";
 
 const Container = styled.div`
   padding: ${({ theme }) => theme.spacing.large};
@@ -44,21 +46,46 @@ const Button = styled.button`
   }
 `;
 
-const TesseractPage: React.FC = () => {
+const OcrPage: React.FC = () => {
+  // The mode is either automatic or manual.  
   const [mode, setMode] = useState<Mode>(Mode.Automatic);
+  // The selected file is the file being processed.
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  // The image preview URL is the URL of the image being processed.
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  // The loading state is used to show a processing indicator.
   const [loading, setLoading] = useState<boolean>(false);
-  const [psmMode, setPsmMode] = useState<string>("3");
+  // The OCR configuration is the configuration for the OCR tool.
+  const [ocrConfiguration, setOCRConfiguration] = useState<{ [key: string]: string }>();
+  // The OCR sections are the sections extracted from the image.  
   const [ocrSections, setOcrSections] = useState<OCRSection<string>[]>([]);
   // For manual mode: user-drawn rectangles.
   const [rectangles, setRectangles] = useState<Rectangle[]>([]);
+  // For manual mode: the current rectangle being drawn.
   const [currentRect, setCurrentRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  // For manual mode: dragging state.
   const [dragging, setDragging] = useState(false);
+  // The templates are stored in local storage.
   const [templates, setTemplates] = useState<Template<Rectangle>[]>([]);
+  // The selected template is stored in local storage.
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  // Get the provider from the URL.
+  const searchParams = useSearchParams();
+  // The provider is passed in the URL as a query parameter.
+  const [provider, _] = useState<string | null>(searchParams.get("provider"));
+  // The OCR configuration component is rendered based on the provider.
+  const [ocrConfigurationComponent, setOCRConfigurationComponent] = useState<React.ReactNode | null>(null);
 
-  // (Optional states for template anchors, etc. not shown here)
+  useEffect(() => {
+    if (provider === Provider.Tesseract) {
+      setOCRConfigurationComponent(
+        <TesseractProvider
+        onConfigurationChange={setOCRConfiguration}
+        />
+      );
+    }
+  }, [provider]);
+
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
 
@@ -289,13 +316,17 @@ const TesseractPage: React.FC = () => {
     }
     const formData = new FormData();
     formData.append("file", selectedFile);
-    formData.append("psmMode", psmMode);
+    if (ocrConfiguration) {
+      for (const [key, value] of Object.entries(ocrConfiguration)) {
+        formData.append(key, value);
+      }
+    }
     formData.append("rectangles", JSON.stringify(rectangles));
     formData.append("naturalWidth", naturalWidth.toString());
     formData.append("naturalHeight", naturalHeight.toString());
 
     try {
-      const response = await fetch("/api/tesseract/manual", {
+      const response = await fetch(`/api/${provider}/manual`, {
         method: "POST",
         body: formData,
       });
@@ -323,8 +354,12 @@ const TesseractPage: React.FC = () => {
     setOcrSections([]);
     const formData = new FormData();
     formData.append("file", selectedFile);
-    formData.append("psmMode", psmMode);
-    const response = await fetch("/api/tesseract/automatic", {
+    if (ocrConfiguration) {
+      for (const [key, value] of Object.entries(ocrConfiguration)) {
+        formData.append(key, value);
+      }
+    }
+    const response = await fetch(`/api/${provider}/automatic`, {
       method: "POST",
       body: formData,
     });
@@ -390,7 +425,7 @@ const TesseractPage: React.FC = () => {
 
   return (
     <Container>
-      <Heading>Tesseract</Heading>
+      <Heading>{provider?.toUpperCase()}</Heading>
 
       <div style={theme.components.controlsContainer}>
         <div style={theme.components.toggleContainer}>
@@ -422,23 +457,7 @@ const TesseractPage: React.FC = () => {
         </Button>
       </div>
 
-      <div style={theme.components.selectorContainer}>
-        <label style={theme.components.label}>Page Segmentation Mode:</label>
-        <select
-          value={psmMode}
-          onChange={(e) => setPsmMode(e.target.value)}
-          style={theme.components.select}
-        >
-          <option value="0">0 - OSD only</option>
-          <option value="1">1 - Auto segmentation with OSD</option>
-          <option value="3">3 - Fully automatic segmentation, no OSD</option>
-          <option value="4">4 - Assume a single column of text</option>
-          <option value="6">6 - Assume a single uniform block of text</option>
-          <option value="7">7 - Treat image as a single text line</option>
-          <option value="8">8 - Treat image as a single word</option>
-          <option value="10">10 - Treat image as a single character</option>
-        </select>
-      </div>
+      { ocrConfigurationComponent }
 
       <div style={{ marginTop: "1rem", display: "flex", alignItems: "center" }}>
         <input
@@ -538,4 +557,4 @@ const TesseractPage: React.FC = () => {
   );
 };
 
-export default TesseractPage;
+export default OcrPage;

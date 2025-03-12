@@ -1,6 +1,7 @@
 // src/app/page.tsx
 "use client"
 
+import { Provider } from "@/types/ocr";
 import Link from "next/link";
 import styled from "styled-components";
 
@@ -63,10 +64,10 @@ const HomePage: React.FC = () => {
       <Description>Select an OCR tool to test:</Description>
       <List>
         <ListItem>
-          <StyledLink href="/tesseract">Tesseract OCR</StyledLink>
+          <StyledLink href={{ pathname: "/ocr", query: { provider: Provider.Tesseract } }}>Tesseract OCR</StyledLink>
         </ListItem>
         <ListItem>
-          <StyledLink href="/easyocr">EasyOCR (Coming Soon)</StyledLink>
+          <StyledLink href={{ pathname: "/ocr", query: { provider: Provider.EasyOCR } }}>EasyOCR (Coming Soon)</StyledLink>
         </ListItem>
       </List>
     </Container>
