@@ -63,10 +63,10 @@ const HomePage: React.FC = () => {
       <Description>Select an OCR tool to test:</Description>
       <List>
         <ListItem>
-          <StyledLink href="/ocr/tesseract">Tesseract OCR</StyledLink>
+          <StyledLink href="/tesseract">Tesseract OCR</StyledLink>
         </ListItem>
         <ListItem>
-          <StyledLink href="/ocr/easyocr">EasyOCR (Coming Soon)</StyledLink>
+          <StyledLink href="/easyocr">EasyOCR (Coming Soon)</StyledLink>
         </ListItem>
       </List>
     </Container>

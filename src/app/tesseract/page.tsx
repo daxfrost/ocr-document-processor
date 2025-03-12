@@ -301,7 +301,7 @@ const TesseractPage: React.FC = () => {
     formData.append("naturalHeight", naturalHeight.toString());
     
     try {
-      const response = await fetch("/api/ocr/tesseract/manual", {
+      const response = await fetch("/api/tesseract/manual", {
         method: "POST",
         body: formData,
       });
@@ -330,7 +330,7 @@ const TesseractPage: React.FC = () => {
     const formData = new FormData();
     formData.append("file", selectedFile);
     formData.append("psmMode", psmMode);
-    const response = await fetch("/api/ocr/tesseract/automatic", {
+    const response = await fetch("/api/tesseract/automatic", {
       method: "POST",
       body: formData,
     });
