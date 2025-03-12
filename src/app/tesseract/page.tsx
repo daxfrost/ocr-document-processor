@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react";
-import { Rectangle, Mode, OCRSection } from "@/types/ocr"; // Assume shared types are defined here
+import { Rectangle, Mode, OCRSection, Template } from "@/types/ocr"; // Assume shared types are defined here
 import styled from 'styled-components';
 import { useTheme } from 'styled-components';
 
@@ -56,6 +56,8 @@ const TesseractPage: React.FC = () => {
   const [originalTemplateRectangles, setOriginalTemplateRectangles] = useState<Rectangle[]>([]);
   const [currentRect, setCurrentRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
 
   // (Optional states for template anchors, etc. not shown here)
   const imageContainerRef = useRef<HTMLDivElement>(null);
@@ -67,7 +69,8 @@ const TesseractPage: React.FC = () => {
     const saved = localStorage.getItem("documentTemplates");
     if (saved) {
       try {
-        // Load templates as needed.
+        const parsedTemplates = JSON.parse(saved);
+        setTemplates(parsedTemplates);
       } catch (err) {
         console.error("Error parsing saved templates", err);
       }
@@ -339,6 +342,55 @@ const TesseractPage: React.FC = () => {
     setLoading(false);
   };
 
+  const handleSaveTemplate = () => {
+    const templateName = window.prompt("Enter template name", "");
+    if (!templateName) return;
+    const newTemplate: Template = { name: templateName, rectangles };
+    const updatedTemplates = [...templates, newTemplate];
+    setTemplates(updatedTemplates);
+    localStorage.setItem("documentTemplates", JSON.stringify(updatedTemplates));
+  };
+
+  const handleLoadTemplate = (templateName: string) => {
+    const template = templates.find(t => t.name === templateName);
+    if (template) {
+      setRectangles(template.rectangles);
+      setOriginalTemplateRectangles(template.rectangles);
+      setSelectedTemplate(templateName);
+      applyTemplateToImage(template.rectangles);
+    }
+  };
+
+  const handleDeleteTemplate = () => {
+    if (!selectedTemplate) return;
+    if (window.confirm(`Are you sure you want to delete the template "${selectedTemplate}"?`)) {
+      const updatedTemplates = templates.filter(t => t.name !== selectedTemplate);
+      setTemplates(updatedTemplates);
+      localStorage.setItem("documentTemplates", JSON.stringify(updatedTemplates));
+      setSelectedTemplate(null);
+    }
+  };
+
+  const applyTemplateToImage = (templateRectangles: Rectangle[]) => {
+    if (!imageRef.current || !imageContainerRef.current) return;
+    const containerRect = imageContainerRef.current.getBoundingClientRect();
+    const imgEl = imageRef.current;
+    const scaleX = containerRect.width / imgEl.naturalWidth;
+    const scaleY = containerRect.height / imgEl.naturalHeight;
+
+    const updatedRectangles = templateRectangles.map(rect => ({
+      ...rect,
+      display: {
+        x: rect.normalized.x * imgEl.naturalWidth * scaleX,
+        y: rect.normalized.y * imgEl.naturalHeight * scaleY,
+        width: rect.normalized.width * imgEl.naturalWidth * scaleX,
+        height: rect.normalized.height * imgEl.naturalHeight * scaleY
+      }
+    }));
+
+    setRectangles(updatedRectangles);
+  };
+
   return (
     <Container>
       <Heading>Tesseract</Heading>
@@ -402,6 +454,30 @@ const TesseractPage: React.FC = () => {
         <Button onClick={() => document.getElementById('fileInput')?.click()}>
           Upload Document
         </Button>
+
+        {mode === "manual" && (
+          <div style={{ marginTop: "1rem", display: "flex", alignItems: "center" }}>
+            <Button onClick={handleSaveTemplate} style={{ marginRight: "1rem" }}>Save Template</Button>
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <label style={{ ...theme.components.label, marginRight: "0.5rem" }}>Load Template:</label>
+              <select 
+                value={selectedTemplate || ""}
+                onChange={(e) => handleLoadTemplate(e.target.value)}
+                style={theme.components.select}
+              >
+                <option value="" disabled>Select a template</option>
+                {templates.map((template, idx) => (
+                  <option key={idx} value={template.name}>{template.name}</option>
+                ))}
+              </select>
+              {selectedTemplate && (
+                <Button onClick={handleDeleteTemplate} style={{ marginLeft: "1rem" }}>
+                  Delete Template
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
       
       {imagePreviewUrl && (
