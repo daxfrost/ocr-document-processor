@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Rectangle, Mode, OCRSection } from "@/types/ocr"; // Assume shared types are defined here
-import styled, { useTheme } from 'styled-components';
+import styled from 'styled-components';
+import { useTheme } from 'styled-components';
 
 const Container = styled.div`
   padding: ${({ theme }) => theme.spacing.large};
@@ -175,13 +176,11 @@ const TesseractPage: React.FC = () => {
           <div
             key={idx}
             style={{
-              position: "absolute",
+              ...theme.components.manualOverlay,
               left: rect.display.x,
               top: rect.display.y,
               width: rect.display.width,
               height: rect.display.height,
-              border: "2px dashed red",
-              cursor: "pointer",
             }}
             onClick={(e) => {
               e.stopPropagation();
@@ -203,19 +202,7 @@ const TesseractPage: React.FC = () => {
           >
             {rect.label && (
               <div
-                style={{
-                  position: "absolute",
-                  top: -24,
-                  left: 0,
-                  backgroundColor: "rgba(0, 0, 0, 0.8)",
-                  color: "#fff",
-                  padding: "4px 8px",
-                  fontSize: "12px",
-                  borderRadius: "4px",
-                  whiteSpace: "nowrap",
-                  display: "flex",
-                  alignItems: "center",
-                }}
+                style={theme.components.manualOverlayLabel}
                 onMouseDown={(e) => e.stopPropagation()}
               >
                 <span>{rect.label}</span>
@@ -228,19 +215,7 @@ const TesseractPage: React.FC = () => {
                       setOriginalTemplateRectangles((prev) => prev.filter((_, i) => i !== idx));
                     }
                   }}
-                  style={{
-                    marginLeft: "4px",
-                    background: "red",
-                    border: "none",
-                    color: "#fff",
-                    borderRadius: "50%",
-                    width: "18px",
-                    height: "18px",
-                    lineHeight: "18px",
-                    textAlign: "center",
-                    cursor: "pointer",
-                    fontSize: "12px",
-                  }}
+                  style={theme.components.manualOverlayButton}
                 >
                   ×
                 </button>
@@ -251,13 +226,12 @@ const TesseractPage: React.FC = () => {
         {currentRect && (
           <div
             style={{
-              position: "absolute",
+              ...theme.components.manualOverlay,
+              ...theme.components.manualOverlayDrag,
               left: currentRect.x,
               top: currentRect.y,
               width: currentRect.width,
               height: currentRect.height,
-              border: "2px dashed blue",
-              pointerEvents: "none",
             }}
           />
         )}
@@ -280,28 +254,14 @@ const TesseractPage: React.FC = () => {
           <div
             key={idx}
             style={{
-              position: "absolute",
+              ...theme.components.ocrOverlay,
               left: section.x * scaleX,
               top: section.y * scaleY,
               width: section.width * scaleX,
               height: section.height * scaleY,
-              border: "2px solid green",
-              pointerEvents: "none",
             }}
           >
-            <div
-              style={{
-                position: "absolute",
-                top: -24,
-                left: 0,
-                backgroundColor: "rgba(0, 128, 0, 0.8)",
-                color: "#fff",
-                padding: "4px 8px",
-                fontSize: "12px",
-                borderRadius: "4px",
-                whiteSpace: "nowrap",
-              }}
-            >
+            <div style={theme.components.ocrOverlayLabel}>
               {section.key}
             </div>
           </div>
