@@ -1,25 +1,28 @@
-export interface OCRSection {
+export interface OCRSection<T = string> {
     key: string;
-    value: string;
+    value: T;
     x: number;
     y: number;
     width: number;
     height: number;
-  }
-  
-  export interface Rectangle {
+}
+
+export interface Rectangle {
     // For UI display (pixels)
     display: { x: number; y: number; width: number; height: number };
     // Normalized values (0 to 1) relative to the image's natural dimensions
     normalized: { x: number; y: number; width: number; height: number };
     label?: string;
-  }
-  
-  export interface Template {
+}
+
+export interface Template<T = Rectangle> {
     name: string;
-    rectangles: Rectangle[];
+    rectangles: T[];
     // Optional anchor for alignment purposes
     anchor?: { x: number; y: number } | null;
-  }
-  
-  export type Mode = "automatic" | "manual";
+}
+
+export enum Mode {
+    Automatic = "automatic",
+    Manual = "manual",
+}

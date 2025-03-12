@@ -45,23 +45,26 @@ const Button = styled.button`
 `;
 
 const TesseractPage: React.FC = () => {
-  const [mode, setMode] = useState<Mode>("automatic");
+  const [mode, setMode] = useState<Mode>(Mode.Automatic);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [psmMode, setPsmMode] = useState<string>("3");
-  const [ocrSections, setOcrSections] = useState<OCRSection[]>([]);
+  const [ocrSections, setOcrSections] = useState<OCRSection<string>[]>([]);
   // For manual mode: user-drawn rectangles.
-  const [rectangles, setRectangles] = useState<Rectangle[]>([]);
+  const [rectangles, setRectangles] = useState<Rectangle[]>(() => {
+    const savedRectangles = localStorage.getItem("manualRectangles");
+    return savedRectangles ? JSON.parse(savedRectangles) : [];
+  });
   const [originalTemplateRectangles, setOriginalTemplateRectangles] = useState<Rectangle[]>([]);
   const [currentRect, setCurrentRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [dragging, setDragging] = useState(false);
-  const [templates, setTemplates] = useState<Template[]>([]);
+  const [templates, setTemplates] = useState<Template<Rectangle>[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
 
   // (Optional states for template anchors, etc. not shown here)
   const imageContainerRef = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
+  const imageRef = useRef<HTMLImageElement | null>(null);
 
   const theme = useTheme();
 
@@ -85,6 +88,10 @@ const TesseractPage: React.FC = () => {
       }
     }
   }, [loading]);
+
+  useEffect(() => {
+    localStorage.setItem("manualRectangles", JSON.stringify(rectangles));
+  }, [rectangles]);
 
   // Add resize handler
   useEffect(() => {
@@ -114,7 +121,7 @@ const TesseractPage: React.FC = () => {
   }, []);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files && event.target.files[0];
+    const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
       const reader = new FileReader();
@@ -130,7 +137,7 @@ const TesseractPage: React.FC = () => {
 
   // --- Manual Drawing Handlers ---
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (mode !== "manual") return;
+    if (mode !== Mode.Manual) return;
     // Since the overlay covers the image, we attach events to that overlay.
     const container = imageContainerRef.current;
     if (!container) return;
@@ -142,7 +149,7 @@ const TesseractPage: React.FC = () => {
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (mode !== "manual" || !dragging || !currentRect || !imageContainerRef.current) return;
+    if (mode !== Mode.Manual || !dragging || !currentRect || !imageContainerRef.current) return;
     const rect = imageContainerRef.current.getBoundingClientRect();
     const currentX = e.clientX - rect.left;
     const currentY = e.clientY - rect.top;
@@ -155,7 +162,7 @@ const TesseractPage: React.FC = () => {
   };
 
   const handleMouseUp = () => {
-    if (mode !== "manual" || !dragging || !currentRect || !imageRef.current || !imageContainerRef.current) return;
+    if (mode !== Mode.Manual || !dragging || !currentRect || !imageRef.current || !imageContainerRef.current) return;
     setDragging(false);
     const containerRect = imageContainerRef.current.getBoundingClientRect();
     const imgEl = imageRef.current;
@@ -345,7 +352,7 @@ const TesseractPage: React.FC = () => {
   const handleSaveTemplate = () => {
     const templateName = window.prompt("Enter template name", "");
     if (!templateName) return;
-    const newTemplate: Template = { name: templateName, rectangles };
+    const newTemplate: Template<Rectangle> = { name: templateName, rectangles };
     const updatedTemplates = [...templates, newTemplate];
     setTemplates(updatedTemplates);
     localStorage.setItem("documentTemplates", JSON.stringify(updatedTemplates));
@@ -398,19 +405,19 @@ const TesseractPage: React.FC = () => {
       <div style={theme.components.controlsContainer}>
         <div style={theme.components.toggleContainer}>
           <button
-            onClick={() => setMode("automatic")}
+            onClick={() => setMode(Mode.Automatic)}
             style={{
               ...theme.components.toggleButton,
-              ...(mode === "automatic" ? theme.components.activeButton : theme.components.inactiveButton),
+              ...(mode === Mode.Automatic ? theme.components.activeButton : theme.components.inactiveButton),
             }}
           >
             Automatic Extraction
           </button>
           <button
-            onClick={() => setMode("manual")}
+            onClick={() => setMode(Mode.Manual)}
             style={{
               ...theme.components.toggleButton,
-              ...(mode === "manual" ? theme.components.activeButton : theme.components.inactiveButton),
+              ...(mode === Mode.Manual ? theme.components.activeButton : theme.components.inactiveButton),
             }}
           >
             Manual Extraction
@@ -436,10 +443,10 @@ const TesseractPage: React.FC = () => {
         </div>
 
         <Button 
-          onClick={mode === "automatic" ? handleAutomaticExtraction : handleManualExtraction} 
+          onClick={mode === Mode.Automatic ? handleAutomaticExtraction : handleManualExtraction} 
           disabled={loading}
         >
-          {loading ? "Processing..." : `Process Document ${mode === "automatic" ? "Automatically" : "Manually"}`}
+          {loading ? "Processing..." : `Process Document ${mode === Mode.Automatic ? "Automatically" : "Manually"}`}
         </Button>
       </div>
 
@@ -455,7 +462,7 @@ const TesseractPage: React.FC = () => {
           Upload Document
         </Button>
 
-        {mode === "manual" && (
+        {mode === Mode.Manual && (
           <div style={{ marginTop: "1rem", display: "flex", alignItems: "center" }}>
             <Button onClick={handleSaveTemplate} style={{ marginRight: "1rem" }}>Save Template</Button>
             <div style={{ display: "flex", alignItems: "center" }}>
@@ -500,11 +507,11 @@ const TesseractPage: React.FC = () => {
               display: "block",
               maxWidth: "100%",
               height: "auto",
-              pointerEvents: mode === "manual" ? "none" : "auto",
+              pointerEvents: mode === Mode.Manual ? "none" : "auto",
             }}
           />
           {/* In manual mode, render an overlay div that covers the entire image to capture mouse events */}
-          {mode === "manual" && (
+          {mode === Mode.Manual && (
             <div
               style={{
                 position: "absolute",
