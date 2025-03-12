@@ -29,7 +29,7 @@ const theme: DefaultTheme = {
   components: {
     toggleContainer: {
       display: 'inline-flex',
-      backgroundColor: '#f0f0f0',
+      backgroundColor: '#e5e5e5',
       padding: '4px',
       borderRadius: '8px',
       gap: '4px',

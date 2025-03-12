@@ -38,6 +38,10 @@ const Button = styled.button`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  &:hover {
+    color: ${({ theme }) => theme.colors.buttonText};
+    background-color: ${({ theme }) => theme.colors.secondary};
+  }
 `;
 
 const TesseractPage: React.FC = () => {
