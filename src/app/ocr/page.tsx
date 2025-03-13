@@ -330,7 +330,7 @@ const OcrPage: React.FC = () => {
     const formData = new FormData();
     formData.append("file", selectedFile);
     if (ocrConfiguration) {
-      for (const [key, value] of Object.entries(ocrConfiguration)) {
+      for (const [key, value] of Object.entries(ocrConfiguration.parameters)) {
         formData.append(key, value);
       }
     }
@@ -368,7 +368,7 @@ const OcrPage: React.FC = () => {
     const formData = new FormData();
     formData.append("file", selectedFile);
     if (ocrConfiguration) {
-      for (const [key, value] of Object.entries(ocrConfiguration)) {
+      for (const [key, value] of Object.entries(ocrConfiguration.parameters)) {
         formData.append(key, value);
       }
     }
