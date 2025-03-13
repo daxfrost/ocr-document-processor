@@ -1,36 +1,125 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OCR Document Processor
 
-## Getting Started
+## Overview
 
-First, run the development server:
+**OCR Document Processor** is a Next.js application designed to showcase two distinct OCR extraction approaches using different OCR libraries with abstractions, currently **Tesseract** and **EasyOCR** are implemented. The application demonstrates two modes for each OCR tool:
+
+1. **Automatic Extraction:**  
+   The backend automatically detects text regions from a document and extracts key–value pairs. The API returns both the extracted data and the bounding boxes (rectangles) so that the frontend can overlay them on the document image for review.
+
+2. **Manual Extraction:**  
+   The user manually draws rectangle sections over an uploaded document image. These user-defined regions (with labels) are sent to the backend API for targeted OCR processing. The API then returns key–value pairs using the provided labels.
+
+OCR libraries are integrated via backend API routes, ensuring that heavy OCR processing occurs server-side while the frontend handles image upload, region selection, and display that supports resizing and natural positioning calculations for rendering and data extraction. Shared TypeScript interfaces are used across the application for consistency.
+
+## Demo
+
+
+
+## Goals and Design Decisions
+
+- **Separation of Concerns:**  
+  - **Frontend:** Built using the Next.js App Router (in `src/app`) for rendering pages and UI components.
+  - **Backend:** OCR processing is handled by API routes (in `src/pages/api`), where heavy processing runs on Node.js.
+
+- **Multiple OCR Libraries:**  
+  - **Tesseract:** Supports both automatic and manual extraction modes, offering flexibility for standardized documents as well as for documents requiring precise region extraction.
+  - **EasyOCR (Forked):** Uses a custom fork of EasyOCR to support larger, complex JSON payloads and currently supports only automatic extraction.
+
+- **Dual Extraction Modes:**  
+  - **Automatic Mode:** The API processes the entire document using built-in block detection and returns both the OCR text and the corresponding bounding boxes. These bounding boxes are rendered as overlays for visual verification.
+  - **Manual Mode:** Users draw rectangle sections on the document image. A transparent overlay captures mouse events so that users can draw without the image interfering. A live blue outline displays the region being drawn, and once the user finishes, they’re prompted for a label. This label is then passed to the backend, which returns key–value pairs using the provided label.
+
+- **API-Driven Architecture:**  
+  By decoupling OCR processing into API endpoints, the application mimics a production-grade system that can easily be extended to support additional OCR libraries or processing options.
+
+- **Shared Interfaces and Consistency:**  
+  Shared TypeScript interfaces (located in `src/types/ocr.ts`) define the structures for OCR sections, rectangles, and templates, ensuring consistency between the frontend and backend.
+
+## Directory Structure
+
+```bash
+src/
+ ├── app/
+ │    ├── page.tsx                   // Homepage with links to OCR tool pages
+ │    └── ocr/
+ │         ├── tesseract.tsx         // Tesseract OCR page (supports automatic & manual modes)
+ │         └── easyocr.tsx           // EasyOCR page (automatic mode only via forked version)
+ ├── pages/
+ │    └── api/
+ │         └── ocr/
+ │              ├── tesseract/
+ │              │     ├── automatic.ts   // API route for automatic Tesseract OCR
+ │              │     └── manual.ts      // API route for manual Tesseract OCR (using predefined rectangles)
+ │              └── easyocr/
+ │                    ├── automatic.ts   // API route for automatic EasyOCR (forked version)
+ │                    └── manual.ts      // API route for manual EasyOCR (stub or not implemented)
+ └── types/
+      └── ocr.ts                    // Shared TypeScript interfaces
+```
+
+## Installation & Usage
+
+1. **Clone the Repository:**
+   ```bash
+   git clone https://github.com/daxfrost/ocr-document-processor.git
+   cd ocr-document-processor
+   ```
+
+2. **Install Dependencies:**
+
+```bash
+npm install
+npm run setup-easyocr
+```
+
+3. **Run Development Server:**
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000 in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Usage:
+- **Homepage:**  
+  Navigate to the homepage to choose the OCR tool you want to test (Tesseract or EasyOCR).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Tesseract OCR Page:**  
+  - **Automatic Mode:**  
+    Upload a document and click "Process Document Automatically." The backend automatically detects text regions and returns extracted key–value pairs along with the detected bounding boxes. The frontend overlays these bounding boxes on the image for review.
+    
+  - **Manual Mode:**  
+    Upload a document and switch to manual mode. You can drag to create extraction rectangles over the image. A transparent overlay captures mouse events (so the image itself won’t be draggable) and displays a live blue outline during the drag. When you release the mouse, you’re prompted to enter a label. These regions (with normalized coordinates and labels) are then sent to the backend API, which returns extracted key–value pairs using your labels.
 
-## Learn More
+- **EasyOCR Page:**  
+  The EasyOCR page supports automatic extraction using your forked version of EasyOCR, which is optimized for handling large, complex JSON payloads.
 
-To learn more about Next.js, take a look at the following resources:
+## API Endpoints
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Tesseract OCR:**
+  - **Automatic:**  
+    `POST /api/ocr/tesseract/automatic`  
+    Processes the full image and returns extracted sections (key–value pairs) along with the detected bounding boxes.
+  - **Manual:**  
+    `POST /api/ocr/tesseract/manual`  
+    Accepts user-defined rectangle sections (with normalized coordinates and labels) plus image dimensions, and returns extracted sections using the provided labels.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **EasyOCR (Forked):**
+  - **Automatic:**  
+    `POST /api/ocr/easyocr/automatic`  
+    Processes the full image using the forked EasyOCR that supports large, complex JSON payloads.
+  - **Manual:**  
+    `POST /api/ocr/easyocr/manual`  
+    (Currently a stub; manual extraction for EasyOCR may be implemented in the future.)
 
-## Deploy on Vercel
+## Future Enhancements
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Enhanced Template Management:**  
+  Expand functionality to save, load, and edit predefined extraction templates that recognize similar documents based on image detection with libraries like OpenCV.
+- **Refinement & Alignment:**  
+  Implement advanced layout analysis and anchoring techniques to improve extraction accuracy.
+- **Additional OCR Libraries:**  
+  Further integrate other OCR libraries or custom processing pipelines.
+- **EasyOCR Manual Mode:**  
+  Extend the forked EasyOCR implementation to support manual extraction if needed.
