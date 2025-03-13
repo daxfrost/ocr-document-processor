@@ -6,6 +6,7 @@ import styled from 'styled-components';
 import { useTheme } from 'styled-components';
 import TesseractProvider from "@/app/ocr/components/TesseractProvider"; // Import the new component
 import { useSearchParams } from "next/navigation";
+import EasyOCRProvider from "./components/EasyOCRProvider";
 
 const Container = styled.div`
   padding: ${({ theme }) => theme.spacing.large};
@@ -77,12 +78,19 @@ const OcrPage: React.FC = () => {
   const [ocrConfigurationComponent, setOCRConfigurationComponent] = useState<React.ReactNode | null>(null);
 
   useEffect(() => {
-    if (provider === Provider.Tesseract) {
-      setOCRConfigurationComponent(
-        <TesseractProvider
-        onConfigurationChange={setOCRConfiguration}
-        />
-      );
+    switch (provider) {
+      case Provider.Tesseract:
+        setOCRConfigurationComponent(
+          <TesseractProvider
+            onConfigurationChange={setOCRConfiguration}
+          />
+        );
+      case Provider.EasyOCR:
+        setOCRConfigurationComponent(
+          <EasyOCRProvider
+            onConfigurationChange={setOCRConfiguration}
+          />
+        );
     }
   }, [provider]);
 
