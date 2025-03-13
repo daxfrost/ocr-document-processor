@@ -2,7 +2,7 @@
 
 ## Overview
 
-**OCR Document Processor** is a Next.js application designed to showcase two distinct OCR extraction approaches using different OCR libraries with abstractions, currently **Tesseract** and **EasyOCR** are implemented. The application demonstrates two modes for each OCR tool:
+**OCR Document Processor** is a Next.js application designed to showcase two distinct OCR extraction approaches using different OCR libraries with abstractions that will support AI for further processing of OCR data, currently **Tesseract** and **EasyOCR** are implemented. The application demonstrates two modes for each OCR tool:
 
 1. **Automatic Extraction:**  
    The backend automatically detects text regions from a document and extracts key–value pairs. The API returns both the extracted data and the bounding boxes (rectangles) so that the frontend can overlay them on the document image for review.
