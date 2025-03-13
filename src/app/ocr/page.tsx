@@ -436,17 +436,29 @@ const OcrPage: React.FC = () => {
     setRectangles(updatedRectangles);
   };
 
+  const handleModeToggle = (selectedMode: Mode) => {
+    if (ocrConfiguration?.supportedModes.includes(selectedMode)) {
+      setMode(selectedMode);
+    } else {
+      alert(`The ${selectedMode} mode is not supported by the provider.`);
+    }
+  };
+
+  useEffect(() => {
+    if (ocrConfiguration?.supportedModes.length) {
+      setMode(ocrConfiguration.supportedModes[0]);
+    }
+  }, [ocrConfiguration]);
+
   return (
     <Container>
       <Heading>{provider?.toUpperCase()}</Heading>
 
       <div style={theme.components.controlsContainer}>
 
-        { "dax = " + ocrConfiguration?.supportedModes[1] }
-
         <div style={theme.components.toggleContainer}>
           <button
-            onClick={() => setMode(Mode.Automatic)}
+            onClick={() => handleModeToggle(Mode.Automatic)}
             style={{
               ...theme.components.toggleButton,
               ...(mode === Mode.Automatic ? theme.components.activeButton : theme.components.inactiveButton),
@@ -455,7 +467,7 @@ const OcrPage: React.FC = () => {
             Automatic Extraction
           </button>
           <button
-            onClick={() => setMode(Mode.Manual)}
+            onClick={() => handleModeToggle(Mode.Manual)}
             style={{
               ...theme.components.toggleButton,
               ...(mode === Mode.Manual ? theme.components.activeButton : theme.components.inactiveButton),

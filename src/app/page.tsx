@@ -67,7 +67,7 @@ const HomePage: React.FC = () => {
           <StyledLink href={{ pathname: "/ocr", query: { provider: Provider.Tesseract } }}>Tesseract OCR</StyledLink>
         </ListItem>
         <ListItem>
-          <StyledLink href={{ pathname: "/ocr", query: { provider: Provider.EasyOCR } }}>EasyOCR (Coming Soon)</StyledLink>
+          <StyledLink href={{ pathname: "/ocr", query: { provider: Provider.EasyOCR } }}>EasyOCR</StyledLink>
         </ListItem>
       </List>
     </Container>
