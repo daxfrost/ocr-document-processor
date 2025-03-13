@@ -1,5 +1,6 @@
 "use client"
 
+import React from 'react';
 import { useState, useRef, useEffect } from "react";
 import { Rectangle, Mode, OCRSection, Template, Provider, OCRConfiguration } from "@/types/ocr"; // Assume shared types are defined here
 import styled from 'styled-components';
@@ -330,7 +331,7 @@ const OcrPage: React.FC = () => {
     const formData = new FormData();
     formData.append("file", selectedFile);
     if (ocrConfiguration) {
-      for (const [key, value] of Object.entries(ocrConfiguration)) {
+      for (const [key, value] of Object.entries(ocrConfiguration.parameters)) {
         formData.append(key, value);
       }
     }
@@ -368,7 +369,7 @@ const OcrPage: React.FC = () => {
     const formData = new FormData();
     formData.append("file", selectedFile);
     if (ocrConfiguration) {
-      for (const [key, value] of Object.entries(ocrConfiguration)) {
+      for (const [key, value] of Object.entries(ocrConfiguration.parameters)) {
         formData.append(key, value);
       }
     }
