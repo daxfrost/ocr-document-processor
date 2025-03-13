@@ -14,7 +14,7 @@ OCR libraries are integrated via backend API routes, ensuring that heavy OCR pro
 
 ## Demo
 
-![OCR Demo](https://github.com/user-attachments/assets/9f2044ec-6acf-495e-8318-0709b7997b3b)
+https://github.com/user-attachments/assets/9f2044ec-6acf-495e-8318-0709b7997b3b
 
 ## Goals and Design Decisions
 
