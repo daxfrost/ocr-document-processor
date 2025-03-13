@@ -61,10 +61,10 @@ src/
 ## Installation & Usage
 
 1. **Clone the Repository:**
-   ```bash
-   git clone https://github.com/daxfrost/ocr-document-processor.git
-   cd ocr-document-processor
-   ```
+```bash
+git clone https://github.com/daxfrost/ocr-document-processor.git
+cd ocr-document-processor
+```
 
 2. **Install Dependencies:**
 
