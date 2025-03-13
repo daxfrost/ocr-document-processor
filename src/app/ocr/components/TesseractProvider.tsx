@@ -23,8 +23,11 @@ const TesseractProvider: React.FC<OCRProvider> = ({ onConfigurationChange }) => 
 
   return (
     <div style={{ marginTop: "1rem", display: "flex", alignItems: "center" }}>
-      <label style={{ marginRight: "0.5rem" }}>Page Segmentation Mode:</label>
+      <label htmlFor="psmMode" style={{ marginRight: "0.5rem" }}>
+        Page Segmentation Mode:
+      </label>
       <select
+        id="psmMode"
         value={localConfig.parameters.psmMode ?? "3"}
         onChange={handleSelectChange}
         style={{ padding: "0.5rem", borderRadius: "4px", border: "1px solid #ccc" }}
