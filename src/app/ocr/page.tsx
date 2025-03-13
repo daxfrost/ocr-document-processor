@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react";
-import { Rectangle, Mode, OCRSection, Template, Provider } from "@/types/ocr"; // Assume shared types are defined here
+import { Rectangle, Mode, OCRSection, Template, Provider, OCRConfiguration } from "@/types/ocr"; // Assume shared types are defined here
 import styled from 'styled-components';
 import { useTheme } from 'styled-components';
 import TesseractProvider from "@/app/ocr/components/TesseractProvider"; // Import the new component
@@ -57,7 +57,7 @@ const OcrPage: React.FC = () => {
   // The loading state is used to show a processing indicator.
   const [loading, setLoading] = useState<boolean>(false);
   // The OCR configuration is the configuration for the OCR tool.
-  const [ocrConfiguration, setOCRConfiguration] = useState<{ [key: string]: string }>();
+  const [ocrConfiguration, setOCRConfiguration] = useState<OCRConfiguration>();
   // The OCR sections are the sections extracted from the image.  
   const [ocrSections, setOcrSections] = useState<OCRSection<string>[]>([]);
   // For manual mode: user-drawn rectangles.
@@ -85,12 +85,17 @@ const OcrPage: React.FC = () => {
             onConfigurationChange={setOCRConfiguration}
           />
         );
+        break;
       case Provider.EasyOCR:
         setOCRConfigurationComponent(
           <EasyOCRProvider
             onConfigurationChange={setOCRConfiguration}
           />
         );
+        break;
+      default:
+        console.error("Unknown provider:", provider);
+        setOCRConfigurationComponent(null);
     }
   }, [provider]);
 
@@ -436,6 +441,9 @@ const OcrPage: React.FC = () => {
       <Heading>{provider?.toUpperCase()}</Heading>
 
       <div style={theme.components.controlsContainer}>
+
+        { "dax = " + ocrConfiguration?.supportedModes[1] }
+
         <div style={theme.components.toggleContainer}>
           <button
             onClick={() => setMode(Mode.Automatic)}

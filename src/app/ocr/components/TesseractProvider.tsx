@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { OCRProvider } from "@/types/ocr";
+import { OCRProvider, OCRConfiguration, Mode } from "@/types/ocr";
 
-const defaultConfig = {
-  psmMode: "3",
+const defaultConfig : OCRConfiguration = {
+  parameters: {
+    psmMode: "3",
+  },
+  supportedModes: [Mode.Automatic, Mode.Manual],
 }
 
 const TesseractProvider: React.FC<OCRProvider> = ({ onConfigurationChange }) => {
@@ -13,7 +16,7 @@ const TesseractProvider: React.FC<OCRProvider> = ({ onConfigurationChange }) => 
   }, []);
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newConfig = { ...localConfig, psmMode: e.target.value };
+    const newConfig = { ...localConfig, parameters: { ...localConfig.parameters, psmMode: e.target.value }   };
     setLocalConfig(newConfig);
     onConfigurationChange(newConfig);
   };
@@ -22,7 +25,7 @@ const TesseractProvider: React.FC<OCRProvider> = ({ onConfigurationChange }) => 
     <div style={{ marginTop: "1rem", display: "flex", alignItems: "center" }}>
       <label style={{ marginRight: "0.5rem" }}>Page Segmentation Mode:</label>
       <select
-        value={localConfig.psmMode ?? "3"}
+        value={localConfig.parameters.psmMode ?? "3"}
         onChange={handleSelectChange}
         style={{ padding: "0.5rem", borderRadius: "4px", border: "1px solid #ccc" }}
       >

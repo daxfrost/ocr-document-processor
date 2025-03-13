@@ -32,6 +32,11 @@ export enum Provider {
   EasyOCR = "easyocr",
 }
 
+export interface OCRConfiguration {
+  parameters: { [key: string]: string };
+  supportedModes: Mode[];
+}
+
 export interface OCRProvider {
-  onConfigurationChange: (config: { [key: string]: string }) => void;
+  onConfigurationChange: (config: OCRConfiguration) => void;
 }

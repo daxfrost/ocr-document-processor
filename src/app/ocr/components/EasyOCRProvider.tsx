@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { OCRProvider } from "@/types/ocr";
+import { OCRProvider, OCRConfiguration, Mode } from "@/types/ocr";
 
-const defaultConfig = {}
+const defaultConfig : OCRConfiguration = {
+  parameters: {},
+  supportedModes: [Mode.Automatic],
+}
 
 const EasyOCRProvider: React.FC<OCRProvider> = ({ onConfigurationChange }) => {
   const [localConfig, setLocalConfig] = useState(defaultConfig);
@@ -11,7 +14,7 @@ const EasyOCRProvider: React.FC<OCRProvider> = ({ onConfigurationChange }) => {
   }, []);
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newConfig = { ...localConfig, psmMode: e.target.value };
+    const newConfig = { ...localConfig, parameters: { ...localConfig.parameters, psmMode: e.target.value } };
     setLocalConfig(newConfig);
     onConfigurationChange(newConfig);
   };
