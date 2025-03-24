@@ -2,11 +2,13 @@
 
 import React from 'react';
 import { useState, useRef, useEffect } from "react";
-import { Rectangle, Mode, OCRSection, Template, Provider, OCRConfiguration } from "@/types/ocr"; // Assume shared types are defined here
 import styled from 'styled-components';
 import { useTheme } from 'styled-components';
-import TesseractProvider from "@/app/ocr/components/TesseractProvider"; // Import the new component
 import { useSearchParams } from "next/navigation";
+
+import { Rectangle, Mode, OCRSection, Template, Provider, OCRConfiguration } from "@/types/ocr"; // Assume shared types are defined here
+
+import TesseractProvider from "@/app/ocr/components/TesseractProvider";
 import EasyOCRProvider from "./components/EasyOCRProvider";
 
 const Container = styled.div`
@@ -451,6 +453,23 @@ const OcrPage: React.FC = () => {
     }
   }, [ocrConfiguration]);
 
+  const handleClassifyImage = async () => {
+    if (!selectedFile) {
+      alert("Please upload a document first.");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+    const response = await fetch(`/api/classify_image/`, {
+      method: "POST",
+      body: formData,
+    });
+    const data = await response.json();
+    console.log(data);
+    alert(`Classification Result: ${data.result}`);
+    setLoading(false);
+  };
+
   return (
     <Container>
       <Heading>{provider?.toUpperCase()}</Heading>
@@ -499,6 +518,12 @@ const OcrPage: React.FC = () => {
         <Button onClick={() => document.getElementById('fileInput')?.click()} style={{ marginRight: "1rem" }}>
           Upload Document
         </Button>
+
+        {imagePreviewUrl && (
+          <Button onClick={handleClassifyImage} style={{ marginRight: "1rem" }}>
+            Classify Document
+          </Button>
+        )}
 
         {mode === Mode.Manual && (
           <>
