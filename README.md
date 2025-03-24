@@ -22,9 +22,13 @@ The application demonstrates two modes for each OCR tool:
 
 OCR libraries are integrated via backend API routes, ensuring that heavy OCR processing occurs server-side while the frontend handles image upload, region selection, and display that supports resizing and natural positioning calculations for rendering and data extraction. Shared TypeScript interfaces are used across the application for consistency.
 
-## Demo
+## OCR Demo
 
 https://github.com/user-attachments/assets/9f2044ec-6acf-495e-8318-0709b7997b3b
+
+## TensorFlow Model
+
+https://github.com/user-attachments/assets/76da459c-d8e6-46ba-ade4-24d9284560a2
 
 ## Goals and Design Decisions
 
@@ -66,6 +70,11 @@ src/
  │                    └── manual.ts      // API route for manual EasyOCR (stub or not implemented)
  └── types/
       └── ocr.ts                    // Shared TypeScript interfaces
+ └── lib/
+      └── tensor/
+           └── predict.mjs          // TensorFlow model prediction Python interface (Node.js)
+           └── predict.py          // TensorFlow model prediction (Python)
+           └── train.py            // TensorFlow model training (Python)
 ```
 
 ## Installation & Usage
@@ -83,7 +92,14 @@ npm install
 npm run setup-easyocr
 ```
 
-3. **Run Development Server:**
+3. **Train TensorFlow Model:**
+
+```bash
+cd lib/tensor
+python3 train.py
+```
+
+4. **Run Development Server:**
 
 ```bash
 npm run dev
