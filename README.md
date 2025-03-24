@@ -83,7 +83,14 @@ npm install
 npm run setup-easyocr
 ```
 
-3. **Run Development Server:**
+3. **Train TensorFlow Model:**
+
+```bash
+cd lib/tensor
+python3 train.py
+```
+
+4. **Run Development Server:**
 
 ```bash
 npm run dev
