@@ -68,8 +68,8 @@ src/
  │              └── easyocr/
  │                    ├── automatic.ts   // API route for automatic EasyOCR (forked version)
  │                    └── manual.ts      // API route for manual EasyOCR (stub or not implemented)
- └── types/
-      └── ocr.ts                    // Shared TypeScript interfaces
+ ├── types/
+ │    └── ocr.ts                    // Shared TypeScript interfaces
  └── lib/
       └── tensor/
            └── predict.mjs          // TensorFlow model prediction Python interface (Node.js)
