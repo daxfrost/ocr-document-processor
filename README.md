@@ -2,7 +2,7 @@
 
 ## Overview
 
-**OCR Document Processor** is a Next.js application designed to showcase two distinct OCR extraction approaches using different OCR libraries with abstractions that ultimately takes the data extracted, stores it, and further processes it with AI & ML to understand optimizations. Currently **Tesseract** and **EasyOCR** are implemented, but many others are on the list:
+**OCR Document Processor** is a Next.js application designed to train a model for document classification detection with **TensorFlow** and also showcase two distinct OCR extraction approaches using different OCR libraries with abstractions that ultimately takes the data extracted, stores it, and further processes it with AI & ML to understand optimizations. Currently **Tesseract** and **EasyOCR** are implemented, but many others are on the list:
 
 - Surya (local)
 - DocTR (via Roboflow Hosted API)
