@@ -28,7 +28,7 @@ https://github.com/user-attachments/assets/9f2044ec-6acf-495e-8318-0709b7997b3b
 
 ## TensorFlow Model
 
-https://github.com/user-attachments/assets/9f2044ec-6acf-495e-8318-0709b7997b3b
+https://github.com/user-attachments/assets/76da459c-d8e6-46ba-ade4-24d9284560a2
 
 ## Goals and Design Decisions
 
