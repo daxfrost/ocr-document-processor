@@ -1,5 +1,11 @@
 # OCR Document Processor
 
+## Introduction
+
+I decided to measure the difference between OCR, Machine Learning & AI, and the results were truly fascinating. I also did the extra work of providing ways to "manually" extract data on an image I defined in templates using OCR tools like Tesseract & EasyOCR (which I forked for larger documents) to see if I could optimize it for specific regions of an image for better results. Then I trained two types of documents with TensorFlow to see if that would provide further improvement, ultimately I was mildly impressed.
+
+I realized OCR is really good but hasn't changed much since its inception, while machine learning is a subset of AI in today's terms, while Open AI's vision is ridiculously efficient and basically eclipsed any attempt I made.
+
 ## Overview
 
 **OCR Document Processor** is a Next.js application designed to train a model for document classification detection with **TensorFlow** and also showcase two distinct OCR extraction approaches using different OCR libraries with abstractions that ultimately takes the data extracted, stores it, and further processes it with AI & ML to understand optimizations. Currently **Tesseract** and **EasyOCR** are implemented, but many others are on the list:
@@ -21,6 +27,10 @@ The application demonstrates two modes for each OCR tool:
    The user manually draws rectangle sections over an uploaded document image. These user-defined regions (with labels) are sent to the backend API for targeted OCR processing. The API then returns key–value pairs using the provided labels.
 
 OCR libraries are integrated via backend API routes, ensuring that heavy OCR processing occurs server-side while the frontend handles image upload, region selection, and display that supports resizing and natural positioning calculations for rendering and data extraction. Shared TypeScript interfaces are used across the application for consistency.
+
+## Overview Demo of OCR, ML, & AI
+
+https://github.com/user-attachments/assets/88606fff-3cf9-46ab-8e5c-fe865fc9487b
 
 ## OCR Demo
 
