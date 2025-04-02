@@ -16,9 +16,11 @@
   "dependencies": {
     "@tensorflow/tfjs": "^4.22.0",
     "@types/styled-components": "^5.1.34",
+    "dotenv": "^16.4.7",
     "formidable": "^3.5.2",
     "next": "15.2.1",
     "node-easyocr": "github:daxfrost/node-easyocr#release",
+    "openai": "^4.91.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "styled-components": "^6.1.15",

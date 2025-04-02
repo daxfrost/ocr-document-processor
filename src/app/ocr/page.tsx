@@ -6,6 +6,21 @@ import styled from 'styled-components';
 import { useTheme } from 'styled-components';
 import { useSearchParams } from "next/navigation";
 
+import * as dotenv from 'dotenv';
+
+dotenv.config();
+
+console.log('OpenAI API Key:', process.env.NEXT_PUBLIC_OPENAI_API_KEY);
+
+import OpenAI from "openai";
+
+const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+if (!apiKey) {
+  throw new Error("The OPENAI_API_KEY environment variable is missing or empty.");
+}
+
+const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+
 import { Rectangle, Mode, OCRSection, Template, Provider, OCRConfiguration } from "@/types/ocr"; // Assume shared types are defined here
 
 import TesseractProvider from "@/app/ocr/components/TesseractProvider";
@@ -470,6 +485,52 @@ const OcrPage: React.FC = () => {
     setLoading(false);
   };
 
+  const handleAIAssist = async () => {
+    if (!selectedFile) {
+      alert("Please upload a document first.");
+      return;
+    }
+    setLoading(true);
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64Image = reader.result?.toString().split(',')[1];
+      if (!base64Image) {
+        alert("Error converting image to base64.");
+        setLoading(false);
+        return;
+      }
+      try {
+        const response = await openai.responses.create({
+          model: "gpt-4o-mini",
+          input: [
+              {
+                  role: "user",
+                  content: [
+                      { type: "input_text", text: "what's in this image and give me a detailed description of the image? also, if it's a invoice, give me the invoice number, if it's a bill of lading, give me the bill of lading number" },
+                      {
+                          type: "input_image",
+                          image_url: `data:image/jpeg;base64,${base64Image}`,
+                          detail: "high",
+                      },
+                  ],
+              },
+          ],
+      });
+        const data = await response.output_text;
+        if (response.error) {
+          alert("Error: " + response.error);
+        } else {
+          alert(`AI Assist Result: ${data}`);
+        }
+      } catch (error) {
+        console.error("API error:", error);
+        alert("Error processing AI assist via API.");
+      }
+      setLoading(false);
+    };
+    reader.readAsDataURL(selectedFile);
+  };
+
   return (
     <Container>
       <Heading>{provider?.toUpperCase()}</Heading>
@@ -501,7 +562,7 @@ const OcrPage: React.FC = () => {
           onClick={mode === Mode.Automatic ? handleAutomaticExtraction : handleManualExtraction}
           disabled={loading}
         >
-          {loading ? "Processing..." : `Process Document ${mode === Mode.Automatic ? "Automatically" : "Manually"}`}
+          {loading ? "Processing..." : `Process Document with OCR ${mode === Mode.Automatic ? "Automatically" : "Manually"}`}
         </Button>
       </div>
 
@@ -520,9 +581,14 @@ const OcrPage: React.FC = () => {
         </Button>
 
         {imagePreviewUrl && (
-          <Button onClick={handleClassifyImage} style={{ marginRight: "1rem" }}>
-            Classify Document
-          </Button>
+          <>
+            <Button onClick={handleClassifyImage} style={{ marginRight: "1rem" }}>
+              Process Document with ML
+            </Button>
+            <Button onClick={handleAIAssist} style={{ marginRight: "1rem" }}>
+              Process Document with AI
+            </Button>
+          </>
         )}
 
         {mode === Mode.Manual && (
