@@ -28,6 +28,10 @@ The application demonstrates two modes for each OCR tool:
 
 OCR libraries are integrated via backend API routes, ensuring that heavy OCR processing occurs server-side while the frontend handles image upload, region selection, and display that supports resizing and natural positioning calculations for rendering and data extraction. Shared TypeScript interfaces are used across the application for consistency.
 
+## Overview Demo of OCR, ML, & AI
+
+https://github.com/user-attachments/assets/88606fff-3cf9-46ab-8e5c-fe865fc9487b
+
 ## OCR Demo
 
 https://github.com/user-attachments/assets/9f2044ec-6acf-495e-8318-0709b7997b3b
